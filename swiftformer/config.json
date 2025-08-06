@@ -1,0 +1,54 @@
+{
+  "architectures": [
+    "SwiftFormerForImageClassification"
+  ],
+  "batch_norm_eps": 1e-05,
+  "depths": [
+    3,
+    3,
+    6,
+    4
+  ],
+  "down_pad": 1,
+  "down_patch_size": 3,
+  "down_stride": 2,
+  "downsamples": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "drop_conv_encoder_rate": 0.0,
+  "drop_mlp_rate": 0.0,
+  "drop_path_rate": 0.0,
+  "embed_dims": [
+    48,
+    56,
+    112,
+    220
+  ],
+  "hidden_act": "gelu",
+  "hidden_dropout_prob": 0.4,
+  "id2label": {
+    "0": "LABEL_0",
+    "1": "LABEL_1",
+    "2": "LABEL_2",
+    "3": "LABEL_3",
+    "4": "LABEL_4"
+  },
+  "image_size": 224,
+  "label2id": {
+    "LABEL_0": 0,
+    "LABEL_1": 1,
+    "LABEL_2": 2,
+    "LABEL_3": 3,
+    "LABEL_4": 4
+  },
+  "layer_scale_init_value": 1e-05,
+  "mlp_ratio": 4,
+  "model_type": "swiftformer",
+  "num_channels": 3,
+  "torch_dtype": "float32",
+  "transformers_version": "4.52.4",
+  "use_layer_scale": true
+}
