@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
 
-from app.db.db import Base  # pastikan Base diimpor dari deklarasi declarative_base()
+from app.db.postgres_db import Base  # pastikan Base diimpor dari deklarasi declarative_base()
 
 class User(Base):
     __tablename__ = "users"
