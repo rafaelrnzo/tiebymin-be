@@ -1,0 +1,11 @@
+tf-keras
+tensorflow
+transformers
+fastapi
+uvicorn
+pillow
+numpy
+pydantic
+python-multipart
+sqlalchemy
+pyscopg2
