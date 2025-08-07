@@ -17,7 +17,9 @@ COPY . .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt && \
     pip install sqlalchemy psycopg2 python-decouple \
-    pip install uvicorn
+    pip install uvicorn \
+    pip install opencv-python \ 
+    pip install mediapipe
 
 EXPOSE 8000
 
