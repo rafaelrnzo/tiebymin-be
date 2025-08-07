@@ -1,27 +1,38 @@
-FROM python:3.10-slim
+# Gunakan full image agar mediapipe tidak error
+FROM python:3.10
 
-ENV VIRTUAL_ENV=/app/venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# Environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libpq-dev \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m venv $VIRTUAL_ENV
+# Set working directory
+WORKDIR /app
 
-COPY . .
+# Copy requirements.txt
+COPY requirements.txt .
 
+# Install dependencies from requirements
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install sqlalchemy psycopg2 python-decouple \
-    pip install uvicorn \
-    pip install opencv-python \ 
-    pip install mediapipe
+    pip install --no-cache-dir sqlalchemy python-decouple uvicorn opencv-python mediapipe && \
+    pip install --no-cache-dir -r requirements.txt
 
+# Copy project files
+COPY ./app /app
+COPY .env .env
+
+# Expose port
 EXPOSE 8000
 
-COPY app /app
+# Run the app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+

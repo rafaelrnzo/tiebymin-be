@@ -8,4 +8,9 @@ numpy
 pydantic
 python-multipart
 sqlalchemy
-pyscopg2
+psycopg2-binary
+python-decouple
+opencv-python
+mediapipe
+supabase
+python-dotenv
