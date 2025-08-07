@@ -4,7 +4,7 @@ import uuid
 
 from schemas.product_color_analysis_compatibility import ProductColorAnalysisCompatibility, ProductColorAnalysisCompatibilityCreate
 from repositories.product_color_analysis_compatibility_repository import ProductColorAnalysisCompatibilityRepository
-from dependencies import get_product_color_analysis_compatibility_repository
+from dependencies.dependencies import get_product_color_analysis_compatibility_repository
 
 router = APIRouter(prefix="/product-color-analysis-compatibility", tags=["Product Color Analysis Compatibility"])
 

@@ -28,7 +28,8 @@ class FaceShapeService:
         inputs = self.processor(images=img, return_tensors="np")
         predictions = self.model.predict(inputs.pixel_values)
         probabilities = tf.nn.softmax(predictions.logits, axis=-1).numpy()[0]
-        predicted_index = np.argmax(probabilities)
+
+        predicted_index = int(np.argmax(probabilities))  # Fix here
         predicted_label = self.CLASS_NAMES[predicted_index]
         confidence = float(probabilities[predicted_index])
 
@@ -36,6 +37,7 @@ class FaceShapeService:
             "label": predicted_label,
             "confidence": round(confidence, 4)
         }
+
         
 from dotenv import load_dotenv
 load_dotenv()

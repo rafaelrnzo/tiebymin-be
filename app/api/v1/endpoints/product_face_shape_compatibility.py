@@ -4,7 +4,7 @@ import uuid
 
 from schemas.product_face_shape_compatibility import ProductFaceShapeCompatibility, ProductFaceShapeCompatibilityCreate
 from repositories.product_face_shape_compatibility_repository import ProductFaceShapeCompatibilityRepository
-from dependencies import get_product_face_shape_compatibility_repository
+from dependencies.dependencies import get_product_face_shape_compatibility_repository
 
 router = APIRouter(prefix="/product-face-shape-compatibility", tags=["Product Face Shape Compatibility"])
 

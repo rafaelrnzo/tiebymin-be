@@ -4,7 +4,7 @@ import uuid
 
 from schemas.product_color import ProductColor, ProductColorCreate
 from repositories.product_color_repository import ProductColorRepository
-from dependencies import get_product_color_repository
+from dependencies.dependencies import get_product_color_repository
 
 router = APIRouter(prefix="/product-colors", tags=["Product Colors"])
 
