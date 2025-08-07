@@ -8,9 +8,14 @@ from repositories.body_shape_repository import SupabaseBodyShapeRepository
 from repositories.face_shape_repository import SupabaseFaceShapeRepository
 from repositories.color_analysis_repository import SupabaseColorAnalysisRepository
 from repositories.product_repository import SupabaseProductRepository
+from repositories.celebrity_repository import SupabaseCelebrityRepository
+from repositories.product_bmi_compatibility_repository import SupabaseProductBmiCompatibilityRepository
+from repositories.product_color_analysis_compatibility_repository import SupabaseProductColorAnalysisCompatibilityRepository
+from repositories.product_face_shape_compatibility_repository import SupabaseProductFaceShapeCompatibilityRepository
+from repositories.product_color_repository import SupabaseProductColorRepository
 
 def create_repository_provider(
-    supabase_repo_class: Type, 
+    supabase_repo_class: Type,
     postgres_repo_class: Optional[Type] = None
 ):
     def get_repository():
@@ -42,4 +47,24 @@ get_color_analysis_repository = create_repository_provider(
 
 get_product_repository = create_repository_provider(
     supabase_repo_class=SupabaseProductRepository
+)
+
+get_celebrity_repository = create_repository_provider(
+    supabase_repo_class=SupabaseCelebrityRepository
+)
+
+get_product_bmi_compatibility_repository = create_repository_provider(
+    supabase_repo_class=SupabaseProductBmiCompatibilityRepository
+)
+
+get_product_color_analysis_compatibility_repository = create_repository_provider(
+    supabase_repo_class=SupabaseProductColorAnalysisCompatibilityRepository
+)
+
+get_product_face_shape_compatibility_repository = create_repository_provider(
+    supabase_repo_class=SupabaseProductFaceShapeCompatibilityRepository
+)
+
+get_product_color_repository = create_repository_provider(
+    supabase_repo_class=SupabaseProductColorRepository
 )

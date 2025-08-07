@@ -6,7 +6,7 @@ from schemas.product import Product, ProductCreate
 from repositories.product_repository import ProductRepository
 from dependencies.dependencies import get_product_repository
 
-router = APIRouter(prefix="/products", tags=["Products"])
+router = APIRouter(prefix="/v1/products", tags=["Products"])
 
 @router.post("/", response_model=Product, status_code=status.HTTP_201_CREATED)
 def create_product(
