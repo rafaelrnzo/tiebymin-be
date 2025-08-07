@@ -25,15 +25,3 @@ class BodyShape(BodyShapeBase):
     
     
 
-# create table public.body_shapes (
-#   id uuid not null default gen_random_uuid (),
-#   name character varying not null,
-#   penjelasan_body_shape text not null,
-#   karakteristik text not null,
-#   tips_body_shape text not null,
-#   link_picture character varying not null,
-#   is_active boolean not null default true,
-#   created_at timestamp with time zone not null default now(),
-#   updated_at timestamp with time zone not null default now(),
-#   constraint body_shapes_pkey primary key (id)
-# ) TABLESPACE pg_default;

@@ -5,7 +5,7 @@ from schemas.bmi import BMICategory, BMICategoryCreate
 from repositories.base import BMICategoryRepository
 from dependencies.dependencies import get_bmi_repository
 
-router = APIRouter(prefix="/bmi-categories", tags=["BMI Categories"])
+router = APIRouter(prefix="/v1/bmi-categories", tags=["BMI Categories"])
 
 @router.post("/", response_model=BMICategory, status_code=status.HTTP_201_CREATED)
 def create_bmi_category(

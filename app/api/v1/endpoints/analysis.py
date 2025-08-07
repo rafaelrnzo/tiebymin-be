@@ -7,9 +7,9 @@ from services.supabase.supabase_upload_photo import upload_photo_to_supabase
 from services.analysis.face_shape_services import face_shape_service
 from services.analysis.bmi_services import BMIService
 
-router = APIRouter(prefix="/analysis", tags=["Analysis"])
+router = APIRouter(prefix="/v1/analysis", tags=["Analysis"])
 
-@router.post("/upload-then-analyze")
+@router.post("/face-shape")
 async def upload_then_analyze_from_supabase(
     tinggi_badan: float = Form(...),
     berat_badan: float = Form(...),

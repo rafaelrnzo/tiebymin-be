@@ -6,7 +6,7 @@ from schemas.body_shape import BodyShape, BodyShapeCreate
 from repositories.body_shape_repository import BodyShapeRepository
 from dependencies.dependencies import get_body_shape_repository
 
-router = APIRouter(prefix="/body-shapes", tags=["Body Shapes"])
+router = APIRouter(prefix="/v1/body-shapes", tags=["Body Shapes"])
 
 @router.post("/", response_model=BodyShape, status_code=status.HTTP_201_CREATED)
 def create_body_shape(

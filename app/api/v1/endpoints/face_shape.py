@@ -8,7 +8,7 @@ from repositories.face_shape_repository import FaceShapeRepository
 from dependencies.dependencies import get_face_shape_repository
 from services.analysis.face_shape_services import face_shape_service
 
-router = APIRouter(prefix="/face-shapes", tags=["Face Shapes"])
+router = APIRouter(prefix="/v1/face-shapes", tags=["Face Shapes"])
 
 
 @router.post("/", response_model=FaceShape, status_code=status.HTTP_201_CREATED)

@@ -3,15 +3,11 @@ from typing import Type, Optional
 from sqlalchemy.orm import Session
 from db.postgres_db import SessionLocal
 
-# BMI Imports
-from repositories.bmi_repository import (
-    SupabaseBMIRepository, 
-    PostgresBMIRepository
-)
-# Body Shape Imports
+from repositories.bmi_repository import SupabaseBMIRepository, PostgresBMIRepository
 from repositories.body_shape_repository import SupabaseBodyShapeRepository
-# Face Shape Imports
 from repositories.face_shape_repository import SupabaseFaceShapeRepository
+from repositories.color_analysis_repository import SupabaseColorAnalysisRepository
+from repositories.product_repository import SupabaseProductRepository
 
 def create_repository_provider(
     supabase_repo_class: Type, 
@@ -38,4 +34,12 @@ get_body_shape_repository = create_repository_provider(
 
 get_face_shape_repository = create_repository_provider(
     supabase_repo_class=SupabaseFaceShapeRepository
+)
+
+get_color_analysis_repository = create_repository_provider(
+    supabase_repo_class=SupabaseColorAnalysisRepository
+)
+
+get_product_repository = create_repository_provider(
+    supabase_repo_class=SupabaseProductRepository
 )
