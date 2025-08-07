@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey, Boolean, TIMESTAMP, JSON
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
-from db.db import Base
+from app.db.postgres_db import Base
 
 class UserAnalysisResult(Base):
     __tablename__ = "user_analysis_results"

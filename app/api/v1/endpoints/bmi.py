@@ -1,39 +1,52 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
+import uuid
+from schemas.bmi import BMICategory, BMICategoryCreate
+from repositories.base import BMICategoryRepository
+from dependencies.dependencies import get_bmi_repository
 
-router = APIRouter(
-    prefix="/bmi",
-    tags=["BMI Classification"]
-)
+router = APIRouter(prefix="/bmi-categories", tags=["BMI Categories"])
 
-class BMIInput(BaseModel):
-    weight_kg: float = Field(..., ge=0.1, description="Berat badan dalam kilogram (kg)")
-    height_cm: float = Field(..., ge=30, description="Tinggi badan dalam centimeter (cm)")
+@router.post("/", response_model=BMICategory, status_code=status.HTTP_201_CREATED)
+def create_bmi_category(
+    category: BMICategoryCreate,
+    repo: BMICategoryRepository = Depends(get_bmi_repository)
+):
+    return repo.create(category)
 
-def classify_bmi(bmi: float) -> str:
-    if bmi < 18.5:
-        return "Underweight"
-    elif 18.5 <= bmi < 25.0:
-        return "Normal weight"
-    elif 25.0 <= bmi < 30.0:
-        return "Overweight"
-    else:
-        return "Obesity"
+@router.get("/", response_model=List[BMICategory])
+def get_all_bmi_categories(
+    repo: BMICategoryRepository = Depends(get_bmi_repository)
+):
+    return repo.get_all()
 
-@router.post("/calculate")
-async def calculate_bmi(data: BMIInput):
-    try:
-        height_m = data.height_cm / 100  # Konversi dari cm ke meter
-        bmi_value = data.weight_kg / (height_m ** 2)
-        category = classify_bmi(bmi_value)
+@router.get("/{category_id}", response_model=BMICategory)
+def get_bmi_category_by_id(
+    category_id: uuid.UUID,
+    repo: BMICategoryRepository = Depends(get_bmi_repository)
+):
+    db_category = repo.get_by_id(category_id)
+    if db_category is None:
+        raise HTTPException(status_code=404, detail="BMI Category not found")
+    return db_category
 
-        return {
-            "weight_kg": data.weight_kg,
-            "height_cm": data.height_cm,
-            "bmi": round(bmi_value, 2),
-            "category": category,
-            "gender": "Female"  # Hardcoded, ubah kalau perlu dinamis
-        }
+@router.put("/{category_id}", response_model=BMICategory)
+def update_bmi_category(
+    category_id: uuid.UUID,
+    category_data: BMICategoryCreate,
+    repo: BMICategoryRepository = Depends(get_bmi_repository)
+):
+    updated_category = repo.update(category_id, category_data)
+    if updated_category is None:
+        raise HTTPException(status_code=404, detail="BMI Category not found")
+    return updated_category
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Terjadi kesalahan: {str(e)}")
+@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_bmi_category(
+    category_id: uuid.UUID,
+    repo: BMICategoryRepository = Depends(get_bmi_repository)
+):
+    success = repo.delete(category_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="BMI Category not found")
+    return

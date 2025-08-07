@@ -48,8 +48,9 @@ async def upload_then_analyze_from_supabase(
             "message": "Upload and analysis from Supabase successful",
             "analysis_result_id": analysis_result_id,
             "supabase_path": uploaded_path,
+            "face_shape_result": face_shape_result,
             "bmi_result": bmi_result,
-            "face_shape_result": face_shape_result
+            "body_shape_type": body_shape_type,
         }
 
     except HTTPException as e:

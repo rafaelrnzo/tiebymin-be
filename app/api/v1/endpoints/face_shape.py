@@ -1,58 +1,55 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.responses import JSONResponse
-from transformers import ViTImageProcessor, TFSwiftFormerForImageClassification
-from PIL import Image
-import numpy as np
-import tensorflow as tf
-import tempfile
-import os
-import io
+from typing import List
+import uuid
 
-router = APIRouter(
-    prefix="/face-shape",
-    tags=["Face Shape Classification"]
-)
+from schemas.face_shape import FaceShape, FaceShapeCreate
+from repositories.face_shape_repository import FaceShapeRepository
+from dependencies.dependencies import get_face_shape_repository
+from services.analysis.face_shape_services import face_shape_service
 
-MODEL_PATH = "/Users/rafaelrnzo/Proj/Proj/Lantech/tiebymin-be/tiebymin-be-v1/swiftformer"
-CLASS_NAMES = ['Heart', 'Oblong', 'Oval', 'Round', 'Square']
-
-if not os.path.isdir(MODEL_PATH):
-    raise RuntimeError(f"Direktori model tidak ditemukan di: {MODEL_PATH}")
-
-try:
-    processor = ViTImageProcessor.from_pretrained(MODEL_PATH)
-    model = TFSwiftFormerForImageClassification.from_pretrained(MODEL_PATH)
-except Exception as e:
-    raise RuntimeError(f"Gagal memuat model atau processor dari {MODEL_PATH}. Error: {e}")
+router = APIRouter(prefix="/face-shapes", tags=["Face Shapes"])
 
 
-def predict_image(image_bytes: bytes):
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+@router.post("/", response_model=FaceShape, status_code=status.HTTP_201_CREATED)
+def create_face_shape(
+    shape_data: FaceShapeCreate,
+    repo: FaceShapeRepository = Depends(get_face_shape_repository)
+):
+    return repo.create(shape_data)
 
-    inputs = processor(images=img, return_tensors="np")
-    predictions = model.predict(inputs)
+@router.get("/", response_model=List[FaceShape])
+def get_all_face_shapes(
+    repo: FaceShapeRepository = Depends(get_face_shape_repository)
+):
+    return repo.get_all()
 
-    predicted_index = np.argmax(predictions.logits, axis=1)[0]
-    predicted_label = CLASS_NAMES[predicted_index]
+@router.get("/{shape_id}", response_model=FaceShape)
+def get_face_shape_by_id(
+    shape_id: uuid.UUID,
+    repo: FaceShapeRepository = Depends(get_face_shape_repository)
+):
+    db_shape = repo.get_by_id(shape_id)
+    if db_shape is None:
+        raise HTTPException(status_code=404, detail="Face shape not found")
+    return db_shape
 
-    probabilities = tf.nn.softmax(predictions.logits, axis=-1).numpy()
-    confidence = float(probabilities[0][predicted_index])
+@router.put("/{shape_id}", response_model=FaceShape)
+def update_face_shape(
+    shape_id: uuid.UUID,
+    shape_data: FaceShapeCreate,
+    repo: FaceShapeRepository = Depends(get_face_shape_repository)
+):
+    updated_shape = repo.update(shape_id, shape_data)
+    if updated_shape is None:
+        raise HTTPException(status_code=404, detail="Face shape not found")
+    return updated_shape
 
-    return {
-        "label": predicted_label,
-        "confidence": round(confidence, 4)
-    }
-
-@router.post("/predict")
-async def predict_face_shape(file: UploadFile = File(...)):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File yang diunggah bukan gambar.")
-
-    image_bytes = await file.read()
-
-    try:
-        result = predict_image(image_bytes)
-        return JSONResponse(content=result)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Terjadi kesalahan saat memproses gambar: {str(e)}")
+@router.delete("/{shape_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_face_shape(
+    shape_id: uuid.UUID,
+    repo: FaceShapeRepository = Depends(get_face_shape_repository)
+):
+    if not repo.delete(shape_id):
+        raise HTTPException(status_code=404, detail="Face shape not found")
+    return
