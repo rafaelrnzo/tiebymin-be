@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api.v1.endpoints import color_analysis, analysis, bmi, body_shape, face_shape, product, celebrity, product_color_analysis_compatibility, product_bmi_compatibility, product_face_shape_compatibility, product_colors
+from api.v1.endpoints import color_analysis, analysis, bmi, body_shape, face_shape, product, celebrity, product_color_analysis_compatibility, product_bmi_compatibility, product_face_shape_compatibility, product_colors, user_analysis_result
 
 app = FastAPI()
 
@@ -15,6 +15,7 @@ app.include_router(product_color_analysis_compatibility.router)
 app.include_router(product_bmi_compatibility.router)
 app.include_router(product_face_shape_compatibility.router)
 app.include_router(product_colors.router)
+app.include_router(user_analysis_result.router)
 
 
 @app.get("/", tags=["Root"])

@@ -13,6 +13,9 @@ from repositories.product_bmi_compatibility_repository import SupabaseProductBmi
 from repositories.product_color_analysis_compatibility_repository import SupabaseProductColorAnalysisCompatibilityRepository
 from repositories.product_face_shape_compatibility_repository import SupabaseProductFaceShapeCompatibilityRepository
 from repositories.product_color_repository import SupabaseProductColorRepository
+# from repositories.analysis_session_repository import SupabaseAnalysisSessionRepository
+from repositories.user_analysis_result_repository import SupabaseUserAnalysisResultRepository
+from repositories.user_photo_repository import SupabaseUserPhotoRepository
 
 def create_repository_provider(
     supabase_repo_class: Type,
@@ -67,4 +70,16 @@ get_product_face_shape_compatibility_repository = create_repository_provider(
 
 get_product_color_repository = create_repository_provider(
     supabase_repo_class=SupabaseProductColorRepository
+)
+
+# get_analysis_session_repository = create_repository_provider(
+#     supabase_repo_class=SupabaseAnalysisSessionRepository
+# )
+
+get_user_analysis_result_repository = create_repository_provider(
+    supabase_repo_class=SupabaseUserAnalysisResultRepository
+)
+
+get_user_photo_repository = create_repository_provider(
+    supabase_repo_class=SupabaseUserPhotoRepository
 )

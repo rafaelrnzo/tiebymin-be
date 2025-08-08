@@ -26,10 +26,18 @@ class BodyShapeRepository(ABC):
     @abstractmethod
     def delete(self, shape_id: uuid.UUID) -> bool:
         pass
+    
+    @abstractmethod
+    def get_by_name(self, name: str) -> Optional[BodyShape]:
+        pass
 
 class SupabaseBodyShapeRepository(BodyShapeRepository):
     TABLE_NAME = "body_shapes"
 
+    def get_by_name(self, name: str) -> Optional[BodyShape]:
+        response = supabase.table(self.TABLE_NAME).select("*").eq("name", name).single().execute()
+        return BodyShape(**response.data) if response.data else None
+    
     def get_all(self) -> List[BodyShape]:
         response = supabase.table(self.TABLE_NAME).select("*").order("name").execute()
         if not response.data:

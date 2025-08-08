@@ -2,6 +2,7 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from fastapi import HTTPException
+from pydantic import BaseModel
 from schemas.color_analysis import ColorAnalysis, ColorAnalysisCreate
 from db.supabase_db import supabase
 
@@ -24,6 +25,10 @@ class ColorAnalysisRepository(ABC):
 
     @abstractmethod
     def delete(self, analysis_id: uuid.UUID) -> bool:
+        pass
+
+    @abstractmethod
+    def get_by_name(self, name: str) -> Optional[ColorAnalysis]:
         pass
 
 class SupabaseColorAnalysisRepository(ColorAnalysisRepository):
@@ -50,3 +55,14 @@ class SupabaseColorAnalysisRepository(ColorAnalysisRepository):
     def delete(self, analysis_id: uuid.UUID) -> bool:
         response = supabase.table(self.TABLE_NAME).delete().eq("id", str(analysis_id)).execute()
         return bool(response.data)
+        
+    def get_by_name(self, name: str) -> Optional[ColorAnalysis]:
+        if not name:
+            return None
+
+        cleaned_name = name.strip()
+        response = supabase.table(self.TABLE_NAME).select("*").ilike("name", cleaned_name).limit(1).execute()
+
+        if response.data:
+            return ColorAnalysis(**response.data[0])
+        return None
