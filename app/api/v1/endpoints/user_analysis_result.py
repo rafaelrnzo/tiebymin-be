@@ -6,7 +6,7 @@ from schemas.user_analysis_result import UserAnalysisResult, UserAnalysisResultC
 from repositories.user_analysis_result_repository import UserAnalysisResultRepository
 from dependencies.dependencies import get_user_analysis_result_repository
 
-router = APIRouter(prefix="/user-analysis-results", tags=["User Analysis Results"])
+router = APIRouter(prefix="/v1/user-analysis-results", tags=["User Analysis Results"])
 
 @router.post("/", response_model=UserAnalysisResult, status_code=status.HTTP_201_CREATED)
 def create_user_analysis_result(

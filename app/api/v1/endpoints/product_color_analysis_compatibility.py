@@ -6,7 +6,7 @@ from schemas.product_color_analysis_compatibility import ProductColorAnalysisCom
 from repositories.product_color_analysis_compatibility_repository import ProductColorAnalysisCompatibilityRepository
 from dependencies.dependencies import get_product_color_analysis_compatibility_repository
 
-router = APIRouter(prefix="/product-color-analysis-compatibility", tags=["Product Color Analysis Compatibility"])
+router = APIRouter(prefix="/v1/product-color-analysis-compatibility", tags=["Product Color Analysis Compatibility"])
 
 @router.post("/", response_model=ProductColorAnalysisCompatibility, status_code=status.HTTP_201_CREATED)
 def create_product_color_analysis_compatibility(

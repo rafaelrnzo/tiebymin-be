@@ -6,7 +6,7 @@ from schemas.product_bmi_compatibility import ProductBmiCompatibility, ProductBm
 from repositories.product_bmi_compatibility_repository import ProductBmiCompatibilityRepository
 from dependencies.dependencies import get_product_bmi_compatibility_repository
 
-router = APIRouter(prefix="/product-bmi-compatibility", tags=["Product BMI Compatibility"])
+router = APIRouter(prefix="/v1/product-bmi-compatibility", tags=["Product BMI Compatibility"])
 
 @router.post("/", response_model=ProductBmiCompatibility, status_code=status.HTTP_201_CREATED)
 def create_product_bmi_compatibility(

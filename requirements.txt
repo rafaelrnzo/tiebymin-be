@@ -15,3 +15,4 @@ mediapipe
 supabase
 python-dotenv
 scikit-learn
+python-multipart

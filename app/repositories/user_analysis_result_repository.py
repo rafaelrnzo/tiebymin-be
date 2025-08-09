@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from fastapi import HTTPException
 from pydantic import BaseModel
+from datetime import datetime
 from schemas.user_analysis_result import UserAnalysisResult, UserAnalysisResultCreate
 from db.supabase_db import supabase
 
@@ -35,6 +36,8 @@ class SupabaseUserAnalysisResultRepository(UserAnalysisResultRepository):
         for key, value in data_dict.items():
             if isinstance(value, uuid.UUID):
                 data_dict[key] = str(value)
+            elif isinstance(value, datetime):
+                data_dict[key] = value.isoformat()
         return data_dict
 
     def get_all(self) -> List[UserAnalysisResult]:

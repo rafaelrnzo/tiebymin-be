@@ -1,26 +1,19 @@
-# services/bmi_service.py
+from typing import Optional
+from repositories.bmi_repository import BMICategoryRepository
+from schemas.bmi import BMICategory
+import uuid
 
 class BMIService:
-    @staticmethod
-    def classify_bmi(bmi: float) -> str:
-        if bmi < 18.5:
-            return "Underweight"
-        elif 18.5 <= bmi < 25.0:
-            return "Normal weight"
-        elif 25.0 <= bmi < 30.0:
-            return "Overweight"
-        else:
-            return "Obesity"
+    def __init__(self, bmi_repo: BMICategoryRepository):
+        self.bmi_repo = bmi_repo
 
-    @staticmethod
-    def calculate_bmi(weight_kg: float, height_cm: float) -> dict:
+    def calculate_bmi_value(self, weight_kg: float, height_cm: float) -> float:
+        if height_cm <= 0:
+            raise ValueError("Height must be a positive number.")
+        
         height_m = height_cm / 100
         bmi = weight_kg / (height_m ** 2)
-        category = BMIService.classify_bmi(bmi)
+        return round(bmi, 2)
 
-        return {
-            "weight_kg": weight_kg,
-            "height_cm": height_cm,
-            "bmi": round(bmi, 2),
-            "category": category
-        }
+    def get_bmi_category_id(self, bmi: float) -> Optional[uuid.UUID]:
+        return self.bmi_repo.find_category_id_by_bmi_value(bmi)

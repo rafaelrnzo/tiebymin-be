@@ -6,7 +6,7 @@ from schemas.product_face_shape_compatibility import ProductFaceShapeCompatibili
 from repositories.product_face_shape_compatibility_repository import ProductFaceShapeCompatibilityRepository
 from dependencies.dependencies import get_product_face_shape_compatibility_repository
 
-router = APIRouter(prefix="/product-face-shape-compatibility", tags=["Product Face Shape Compatibility"])
+router = APIRouter(prefix="/v1/product-face-shape-compatibility", tags=["Product Face Shape Compatibility"])
 
 @router.post("/", response_model=ProductFaceShapeCompatibility, status_code=status.HTTP_201_CREATED)
 def create_product_face_shape_compatibility(

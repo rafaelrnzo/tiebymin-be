@@ -4,9 +4,9 @@ import uuid
 
 from schemas.user_photo import UserPhoto, UserPhotoCreate
 from repositories.user_photo_repository import UserPhotoRepository
-from dependencies import get_user_photo_repository
+from dependencies.dependencies import get_user_photo_repository
 
-router = APIRouter(prefix="/user-photos", tags=["User Photos"])
+router = APIRouter(prefix="/v1/user-photos", tags=["User Photos"])
 
 @router.post("/", response_model=UserPhoto, status_code=status.HTTP_201_CREATED)
 def create_user_photo_record(

@@ -6,7 +6,7 @@ from schemas.product_color import ProductColor, ProductColorCreate
 from repositories.product_color_repository import ProductColorRepository
 from dependencies.dependencies import get_product_color_repository
 
-router = APIRouter(prefix="/product-colors", tags=["Product Colors"])
+router = APIRouter(prefix="/v1/product-colors", tags=["Product Colors"])
 
 @router.post("/", response_model=ProductColor, status_code=status.HTTP_201_CREATED)
 def create_product_color(

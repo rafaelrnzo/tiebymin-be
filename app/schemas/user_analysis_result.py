@@ -8,6 +8,8 @@ class UserAnalysisResultBase(BaseModel):
     face_shape_id: Optional[uuid.UUID] = None
     body_shape_id: Optional[uuid.UUID] = None
     color_analysis_id: Optional[uuid.UUID] = None
+    bmi_category_id: Optional[uuid.UUID] = None
+    celebrity_id: Optional[uuid.UUID] = None
     analysis_details: Optional[Dict[str, Any]] = None
     is_final_result: bool = Field(False)
 

@@ -47,11 +47,44 @@ class BMICategoryRepository(ABC):
     @abstractmethod
     def delete(self, category_id: uuid.UUID) -> bool:
         pass
-
+    
+    @abstractmethod
+    def find_by_bmi_value(self, bmi_value: float) -> Optional[BMICategory]:
+        pass
+        
+    @abstractmethod 
+    def find_category_id_by_bmi_value(self, bmi_value: float) -> Optional[uuid.UUID]:
+        pass
 
 class SupabaseBMIRepository(BMICategoryRepository):
     TABLE_NAME = "bmi_categories"
 
+    def find_by_bmi_value(self, bmi_value: float) -> Optional[BMICategory]:
+        response = (
+            supabase.table(self.TABLE_NAME)
+            .select("*")
+            .lte("min_bmi", bmi_value)
+            .or_(f"max_bmi.gte.{bmi_value},max_bmi.is.null")
+            .limit(1)
+            .execute()
+        )
+        if response.data:
+            return BMICategory(**response.data[0])
+        return None
+    
+    def find_category_id_by_bmi_value(self, bmi_value: float) -> Optional[uuid.UUID]:
+        response = (
+            supabase.table(self.TABLE_NAME)
+            .select("id")
+            .lte("min_bmi", bmi_value)
+            .or_(f"max_bmi.gte.{bmi_value},max_bmi.is.null")
+            .limit(1)
+            .execute()
+        )
+        if response.data:
+            return uuid.UUID(response.data[0]['id'])
+        return None
+    
     def get_all(self) -> List[BMICategory]:
         response = supabase.table(self.TABLE_NAME).select("*").order("min_bmi").execute()
         if not response.data:
