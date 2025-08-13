@@ -23,7 +23,7 @@ COPY requirements.txt .
 
 # Install dependencies from requirements
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir sqlalchemy python-decouple uvicorn opencv-python mediapipe && \
+    pip install --no-cache-dir sqlalchemy python-decouple uvicorn opencv-python mediapipe pydantic[email] passlib[bcrypt] && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
