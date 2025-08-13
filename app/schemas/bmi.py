@@ -8,6 +8,7 @@ class BMICategoryBase(BaseModel):
     min_bmi: float = Field(..., example=18.5, description="Nilai BMI minimum untuk kategori ini.")
     max_bmi: Optional[float] = Field(None, example=24.9, description="Nilai BMI maksimum, bisa kosong untuk kategori teratas.")
     tips_fashion: str = Field(..., example="Kenakan pakaian yang pas di badan untuk menonjolkan siluet.", description="Saran fashion untuk kategori BMI ini.")
+    bmi_tips_summary: Optional[str] = Field(None, example="Pilih pakaian yang nyaman dan sesuai dengan bentuk tubuh Anda.", description="Ringkasan tips fashion untuk kategori BMI ini.")
     is_active: bool = Field(True, description="Menandakan apakah kategori ini aktif dan digunakan.")
 
 class BMICategoryCreate(BMICategoryBase):

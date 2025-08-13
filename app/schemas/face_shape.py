@@ -10,6 +10,7 @@ class FaceShapeBase(BaseModel):
     tips_bentuk_wajah: str = Field(..., example="Most hairstyles work well with this shape.")
     illustration_url: Optional[str] = Field(None, example="https://example.com/oval.jpg")
     is_active: bool = Field(True)
+    face_tips_summary: Optional[str] = Field(None, example="Choose hairstyles that highlight your cheekbones.")
     
 class FaceShapeCreate(FaceShapeBase):
     pass

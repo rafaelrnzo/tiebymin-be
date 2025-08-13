@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.endpoints import (
     color_analysis,
+    user,
     analysis,
     bmi,
     body_shape,
@@ -21,13 +22,14 @@ app = FastAPI()
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3001", "http://localhost:3000", "http://localhost:3002"],  
+    allow_origins=["http://localhost:3001", "http://localhost:3000", "http://localhost:3002", "https://tiebymin-ai.vercel.app"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app.include_router(analysis.router)
+app.include_router(user.router)
 app.include_router(bmi.router)
 app.include_router(color_analysis.router)
 app.include_router(product.router)

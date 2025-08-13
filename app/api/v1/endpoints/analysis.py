@@ -136,3 +136,27 @@ async def perform_full_analysis(
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred during analysis.")
+    
+@router.post("/face-color-analysis")
+async def analyze_face_and_color(
+    foto_wajah: UploadFile = File(...),
+):
+    file_content = await foto_wajah.read()
+
+    try:
+        face_shape_result = face_shape_service.predict(image_bytes=file_content)
+        color_tone_result = ColorToneService().detect(image_bytes=file_content)
+
+        return {
+            "face_shape": face_shape_result, 
+            "color_tone": color_tone_result  
+        }
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred during face/color analysis."
+        )

@@ -15,6 +15,17 @@ def create_user_photo_record(
 ):
     return repo.create(photo_data)
 
+@router.get("/analysis-results/{result_id}/photos")
+async def get_photos_for_analysis_result(
+    result_id: uuid.UUID,
+    photo_repo: UserPhotoRepository = Depends(get_user_photo_repository)
+):
+    photos = photo_repo.get_by_analysis_result_id(result_id)
+    
+    if not photos:
+        raise HTTPException(status_code=404, detail="No photos found for this analysis result")
+        
+    return photos
 @router.get("/", response_model=List[UserPhoto])
 def get_all_user_photo_records(
     repo: UserPhotoRepository = Depends(get_user_photo_repository)
@@ -50,3 +61,4 @@ def delete_user_photo_record(
     if not repo.delete(photo_id):
         raise HTTPException(status_code=404, detail="User photo record not found")
     return
+
