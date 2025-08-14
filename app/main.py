@@ -14,12 +14,13 @@ from api.v1.endpoints import (
     product_face_shape_compatibility,
     product_colors,
     user_analysis_result,
-    user_photo
+    user_photo,
+    product_body_shape_compatibility,
+    recomendation
 )
 
 app = FastAPI()
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3001", "http://localhost:3000", "http://localhost:3002", "https://tiebymin-ai.vercel.app"],  
@@ -30,18 +31,20 @@ app.add_middleware(
 
 app.include_router(analysis.router)
 app.include_router(user.router)
+app.include_router(user_analysis_result.router)
+app.include_router(user_photo.router)
+app.include_router(recomendation.router)
 app.include_router(bmi.router)
 app.include_router(color_analysis.router)
 app.include_router(product.router)
 app.include_router(body_shape.router)
 app.include_router(face_shape.router)
 app.include_router(celebrity.router)
+app.include_router(product_body_shape_compatibility.router)
 app.include_router(product_color_analysis_compatibility.router)
 app.include_router(product_bmi_compatibility.router)
 app.include_router(product_face_shape_compatibility.router)
 app.include_router(product_colors.router)
-app.include_router(user_analysis_result.router)
-app.include_router(user_photo.router)
 
 @app.get("/", tags=["Root"])
 async def read_root():

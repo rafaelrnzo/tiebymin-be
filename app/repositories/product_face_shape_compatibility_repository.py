@@ -26,9 +26,17 @@ class ProductFaceShapeCompatibilityRepository(ABC):
     @abstractmethod
     def delete(self, compatibility_id: uuid.UUID) -> bool:
         pass
+    
+    @abstractmethod
+    def get_all(self) -> List[ProductFaceShapeCompatibility]:
+        pass
 
 class SupabaseProductFaceShapeCompatibilityRepository(ProductFaceShapeCompatibilityRepository):
     TABLE_NAME = "product_face_shape_compatibility"
+    
+    def get_all(self) -> List[ProductFaceShapeCompatibility]:
+        response = supabase.table(self.TABLE_NAME).select("*").execute()
+        return [ProductFaceShapeCompatibility(**item) for item in response.data] if response.data else []
 
     def _prepare_data(self, pydantic_model: BaseModel) -> dict:
         data_dict = pydantic_model.dict()

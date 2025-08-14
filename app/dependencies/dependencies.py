@@ -17,6 +17,7 @@ from repositories.product_color_repository import SupabaseProductColorRepository
 from repositories.user_analysis_result_repository import SupabaseUserAnalysisResultRepository
 from repositories.user_photo_repository import SupabaseUserPhotoRepository
 from repositories.user_repository import SupabaseUserRepository
+from repositories.product_body_shape_compatibility_repository import SupabaseProductBodyShapeCompatibilityRepository
 
 def create_repository_provider(
     supabase_repo_class: Type,
@@ -83,4 +84,8 @@ get_user_photo_repository = create_repository_provider(
 
 get_user_repository = create_repository_provider(
     supabase_repo_class=SupabaseUserRepository
+)
+
+get_product_body_shape_compatibility_repository = create_repository_provider(
+    supabase_repo_class=SupabaseProductBodyShapeCompatibilityRepository
 )

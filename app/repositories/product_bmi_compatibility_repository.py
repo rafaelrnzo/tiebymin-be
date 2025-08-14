@@ -26,9 +26,17 @@ class ProductBmiCompatibilityRepository(ABC):
     @abstractmethod
     def delete(self, compatibility_id: uuid.UUID) -> bool:
         pass
+    
+    @abstractmethod
+    def get_all(self) -> List[ProductBmiCompatibility]:
+        pass
 
 class SupabaseProductBmiCompatibilityRepository(ProductBmiCompatibilityRepository):
     TABLE_NAME = "product_bmi_compatibility"
+    
+    def get_all(self) -> List[ProductBmiCompatibility]:
+        response = supabase.table(self.TABLE_NAME).select("*").execute()
+        return [ProductBmiCompatibility(**item) for item in response.data] if response.data else []
 
     def _prepare_data(self, pydantic_model: BaseModel) -> dict:
         data_dict = pydantic_model.dict()
