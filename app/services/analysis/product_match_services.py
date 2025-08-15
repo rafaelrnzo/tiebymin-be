@@ -24,45 +24,49 @@ class ProductRecommendationService:
         self.color_analysis_compat_repo = color_analysis_compat_repo
         self.bmi_compat_repo = bmi_compat_repo
 
-    def get_recommendations(self, analysis_result_id: uuid.UUID) -> List[Dict[str, Any]]:
-        # 1. Ambil hasil analisis pengguna
+    def get_recommendations(self, analysis_result_id: uuid.UUID) -> Dict[str, List[Dict[str, Any]]]:
         analysis_result = self.user_analysis_repo.get_by_id(analysis_result_id)
         if not analysis_result:
-            return []
+            return {"hijab": [], "clothes": []}
 
-        # 2. Ambil semua produk dan data kompatibilitas
         all_products = self.product_repo.get_all()
         face_compat_data = self.face_shape_compat_repo.get_all()
         body_compat_data = self.body_shape_compat_repo.get_all()
         color_compat_data = self.color_analysis_compat_repo.get_all()
         bmi_compat_data = self.bmi_compat_repo.get_all()
         
-        # 3. Buat Peta (Map) untuk pencarian skor yang cepat
         face_scores = {(item.product_id, item.face_shape_id): item.compatibility_score for item in face_compat_data}
         body_scores = {(item.product_id, item.body_shape_id): item.compatibility_score for item in body_compat_data}
         color_scores = {(item.product_color_id, item.color_analysis_id): item.compatibility_score for item in color_compat_data}
         bmi_scores = {(item.product_id, item.bmi_category_id): item.compatibility_score for item in bmi_compat_data}
 
-        # 4. Kalkulasi skor untuk setiap produk
-        ranked_products = []
+        ranked_hijabs = []
+        ranked_clothes = []
+
         for product in all_products:
             total_score = 0
+            product_dict = product.dict()
+
             if product.category.lower() == 'hijab':
                 score1 = face_scores.get((product.id, analysis_result.face_shape_id), 0)
-                # Note: Color compatibility is by product_color_id, this requires a more complex lookup.
-                # For simplicity here, we'll omit color score or assume a simplified logic.
-                # A proper implementation would need to check all product_colors for the product.
+                # Omitting color score for simplicity as it requires a more complex lookup
                 total_score = score1
+                if total_score > 0:
+                    product_dict['total_compatibility_score'] = total_score
+                    ranked_hijabs.append(product_dict)
             
             elif product.category.lower() == 'clothes':
                 score1 = body_scores.get((product.id, analysis_result.body_shape_id), 0)
                 score2 = bmi_scores.get((product.id, analysis_result.bmi_category_id), 0)
                 total_score = score1 + score2
-            
-            if total_score > 0:
-                product_dict = product.dict()
-                product_dict['total_compatibility_score'] = total_score
-                ranked_products.append(product_dict)
+                if total_score > 0:
+                    product_dict['total_compatibility_score'] = total_score
+                    ranked_clothes.append(product_dict)
         
-        # 5. Urutkan produk berdasarkan skor tertinggi
-        return sorted(ranked_products, key=lambda p: p['total_compatibility_score'], reverse=True)
+        sorted_hijabs = sorted(ranked_hijabs, key=lambda p: p['total_compatibility_score'], reverse=True)
+        sorted_clothes = sorted(ranked_clothes, key=lambda p: p['total_compatibility_score'], reverse=True)
+
+        return {
+            "hijab": sorted_hijabs[:3],
+            "clothes": sorted_clothes[:3]
+        }
