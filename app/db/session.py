@@ -1,23 +1,22 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+import os
+from dotenv import load_dotenv
 from app.core.config import settings
-from typing import AsyncGenerator
+load_dotenv()
 
-DATABASE_URL = settings.DATABASE_URL  # pastikan formatnya: postgresql+asyncpg://...
+DATABASE_URL = settings.DATABASE_URL or os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL must be set in .env file")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+Base = declarative_base()
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Dependency function that yields a database session.
-    """
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

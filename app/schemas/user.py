@@ -1,52 +1,37 @@
-from pydantic import BaseModel, EmailStr
+import uuid
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
-from uuid import UUID
 from datetime import datetime
 
 class UserBase(BaseModel):
-    username: str
-    full_name: Optional[str] = None
-    email: str
-    team: Optional[str] = None
-
-class UserCreate(UserBase):
-    password: str
+    email: EmailStr = Field(..., example="jane.doe@example.com")
+    first_name: str = Field(..., example="Jane")
+    last_name: str = Field(..., example="Doe")
+    phone: Optional[str] = Field(None, example="081234567890")
+    google_id: Optional[str] = None
 
 class UserLogin(BaseModel):
-    username: str
+    email: EmailStr
     password: str
 
-class UserUpdate(UserBase):
-    pass
+class UserRegistration(UserBase):
+    password: str = Field(..., min_length=8)
 
-class ProfileUpdate(BaseModel):
-    full_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    team: Optional[str] = None
+class UserCreate(UserBase):
+    password_hash: str
 
-class PasswordReset(BaseModel):
-    current_password: str
-    new_password: str
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: Optional[bool] = None
 
-class PasswordResetRequest(BaseModel):
-    email: EmailStr
-
-class UserOut(UserBase):
-    id: UUID
-    created_at: Optional[datetime]
-    created_by: Optional[str]
-    updated_at: Optional[datetime]
-    updated_by: Optional[str]
-    # Review statistics
-    total_reviewed: Optional[int] = 0
-    total_approved: Optional[int] = 0
-    total_rejected: Optional[int] = 0
-    contribution_percent: Optional[int] = 0
+class User(UserBase):
+    id: uuid.UUID
+    email_verified_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    is_active: bool
 
     class Config:
-        from_attributes = True
-
-class UserLoginResponse(BaseModel):
-    access_token: str
-    token_type: str
-    user: UserOut
+        orm_mode = True

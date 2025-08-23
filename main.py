@@ -1,11 +1,6 @@
-"""
-Entrypoint script to run FastAPI app from project root.
-Usage: python main.py
-"""
 import uvicorn
-from app.main import app  # Expose the app variable for uvicorn
+from app.main import app
 
-# Expose the app variable for uvicorn
 app = app
 
 if __name__ == "__main__":

@@ -1,37 +1,38 @@
-FROM python:3.11-slim
+# Gunakan full image agar mediapipe tidak error
+FROM python:3.10
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Set work directory
-WORKDIR /app
+# Environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 # Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        gcc \
-        libpq-dev \
-        libgl1 \
-        libglib2.0-0 \
-        libsm6 \
-        libxext6 \
-        libxrender1 \
-        ffmpeg \
-        libjpeg-dev \
-        libpng-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+# Set working directory
+WORKDIR /app
 
-# Copy project
-COPY . .
+# Copy requirements.txt
+COPY requirements.txt .
+
+# Install dependencies from requirements
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir sqlalchemy python-decouple uvicorn opencv-python mediapipe pydantic[email] passlib[bcrypt] && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY ./app /app
+COPY .env .env
 
 # Expose port
-EXPOSE 8016
+EXPOSE 8000
 
-# Command to run Alembic migrations first, then start the app
-CMD alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8016
+# Run the app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+

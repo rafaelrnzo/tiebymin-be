@@ -13,7 +13,6 @@ setup_logging()
 # Create FastAPI instance
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
     version="1.0.0",
     description="BE Slideshow API V2",
 )
@@ -31,7 +30,6 @@ if settings.BACKEND_CORS_ORIGINS:
 
 @app.on_event("startup")
 async def startup_event():
-    """Application startup event."""
     logger.info(f"Starting {settings.PROJECT_NAME}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"API V1 URL: {settings.API_V1_STR}")
@@ -39,17 +37,13 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Application shutdown event."""
     logger.info(f"Shutting down {settings.PROJECT_NAME}")
 
 
-# Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
 
 @app.get("/")
 async def root():
-    """Root endpoint."""
     return {
         "message": f"Welcome to {settings.PROJECT_NAME}",
         "version": "1.0.0",

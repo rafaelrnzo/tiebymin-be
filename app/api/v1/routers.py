@@ -1,15 +1,23 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, auth, training, review, evaluation
+from app.api.v1.endpoints import user, auth, bmi, body_shape, celebrity, face_shape, color_analysis, user_photo,user_analysis_result, analysis_feedback, product_bmi_compatibility, product_body_shape_compatibility, product_color_analysis_compatibility, product_color, product_face_shape_compatibility
 
 api_router = APIRouter()
 
-# Include health endpoint
-api_router.include_router(health.router, prefix="/health", tags=["health"])
-# Include auth endpoints
-api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
-# Include training endpoints
-api_router.include_router(training.router, prefix="/training", tags=["training"])
-# Include review endpoints
-api_router.include_router(review.router, prefix="/review", tags=["review"])
-# Include evaluation endpoints
-api_router.include_router(evaluation.router, prefix="/evaluation", tags=["evaluation"])
+# Core Feature Endpoints
+api_router.include_router(auth.router)
+
+# CRUD Endpoints
+api_router.include_router(user.router)
+api_router.include_router(bmi.router)
+api_router.include_router(body_shape.router)
+api_router.include_router(celebrity.router)
+api_router.include_router(face_shape.router)
+api_router.include_router(color_analysis.router)
+api_router.include_router(user_photo.router)
+api_router.include_router(user_analysis_result.router)
+api_router.include_router(analysis_feedback.router)
+api_router.include_router(product_bmi_compatibility.router)
+api_router.include_router(product_body_shape_compatibility.router)
+api_router.include_router(product_color_analysis_compatibility.router)
+api_router.include_router(product_color.router)
+api_router.include_router(product_face_shape_compatibility.router)
