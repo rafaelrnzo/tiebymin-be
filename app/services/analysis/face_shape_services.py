@@ -19,7 +19,7 @@ class FaceShapeService:
             print(f"Memuat model dari {self.MODEL_PATH}...")
             self.processor = ViTImageProcessor.from_pretrained(self.MODEL_PATH)
             self.model = TFSwiftFormerForImageClassification.from_pretrained(self.MODEL_PATH)
-            print("Model dan processor berhasil dimuat. ✅")
+            print("Model dan processor berhasil dimuat.")
         except Exception as e:
             raise RuntimeError(f"Gagal memuat model atau processor. Error: {e}")
 
