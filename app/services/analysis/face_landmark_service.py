@@ -5,9 +5,13 @@ from mediapipe.framework.formats import landmark_pb2
 import numpy as np
 import cv2
 from typing import Tuple, Dict, Any
+from dotenv import load_dotenv
+import os 
 
+load_dotenv()
 class FaceLandmarkService:
-    def __init__(self, model_path='face_landmarker_v2_with_blendshapes.task'):
+    landmark_model_path = os.getenv("MODEL_LANDMARK_PATH")
+    def __init__(self, model_path=landmark_model_path):
         base_options = python.BaseOptions(model_asset_path=model_path)
         options = vision.FaceLandmarkerOptions(
             base_options=base_options,

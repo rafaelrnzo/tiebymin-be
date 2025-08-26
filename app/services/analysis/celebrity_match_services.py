@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from repositories.celebrity_repository import CelebrityRepository
+from app.repositories.celebrity_repository import CelebrityRepository
 
 class CelebrityMatchService:
     def __init__(self, celebrity_repo: CelebrityRepository):

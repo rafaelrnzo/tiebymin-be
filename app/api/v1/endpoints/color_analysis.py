@@ -4,7 +4,7 @@ import uuid
 
 from app.schemas.color_analysis import ColorAnalysis, ColorAnalysisCreate, ColorAnalysisUpdate
 from app.repositories.color_analysis_repository import ColorAnalysisRepository
-from app.dependencies import get_color_analysis_repository
+from app.dependencies.dependencies import get_color_analysis_repository
 
 router = APIRouter(prefix="/color-analysis", tags=["Color Analysis"])
 

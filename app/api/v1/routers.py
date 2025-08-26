@@ -1,10 +1,11 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import user, auth, bmi, body_shape, celebrity, face_shape, color_analysis, user_photo,user_analysis_result, analysis_feedback, product_bmi_compatibility, product_body_shape_compatibility, product_color_analysis_compatibility, product_color, product_face_shape_compatibility
+from app.api.v1.endpoints import user, auth, bmi, body_shape, celebrity, face_shape, color_analysis, user_photo,user_analysis_result, analysis_feedback, product_bmi_compatibility, product_body_shape_compatibility, product_color_analysis_compatibility, product_color, product_face_shape_compatibility, analysis, color_analysis
 
 api_router = APIRouter()
 
 # Core Feature Endpoints
 api_router.include_router(auth.router)
+api_router.include_router(analysis.router)
 
 # CRUD Endpoints
 api_router.include_router(user.router)
@@ -21,3 +22,5 @@ api_router.include_router(product_body_shape_compatibility.router)
 api_router.include_router(product_color_analysis_compatibility.router)
 api_router.include_router(product_color.router)
 api_router.include_router(product_face_shape_compatibility.router)
+api_router.include_router(color_analysis.router)
+

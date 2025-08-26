@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
 class Settings(BaseSettings):
     API_V1_STR: str = "/v1"
     PROJECT_NAME: str = "Tiebymin BE V2 - Production"
@@ -23,9 +24,18 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/v1/auth/google/callback"  
     GOOGLE_POST_LOGIN_REDIRECT: str = "https://tiebymin-ai.vercel.app/analyze/first"
     ENVIRONMENT: str = "production"
+    
+    # 👉 MinIO Config
+    MINIO_ENDPOINT: str
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+    BUCKET_NAME: str = "user-photos"  # default kalau tidak ada di .env
+    
+    MODEL_PATH: Optional[str] = None 
+    MODEL_LANDMARK_PATH: Optional[str] = None 
 
     BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
-        "http://localhost:8000"
+        "http://localhost:8000",
         "http://localhost:3001", 
         "http://localhost:3000", 
         "http://localhost:3002", 
@@ -45,5 +55,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+
 
 settings = Settings()

@@ -18,3 +18,4 @@ scikit-learn
 python-multipart
 pydantic-settings
 loguru
+boto3
