@@ -1,10 +1,8 @@
 import uuid
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from fastapi import HTTPException
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from datetime import datetime
+from sqlalchemy import func
 
 from app.schemas.user_analysis_result import UserAnalysisResult, UserAnalysisResultCreate, UserAnalysisResultUpdate
 from app.models.user_analysis_result import UserAnalysisResultModel
@@ -13,21 +11,23 @@ class UserAnalysisResultRepository(ABC):
     @abstractmethod
     def get_all(self) -> List[UserAnalysisResult]:
         pass
-
     @abstractmethod
     def get_by_id(self, result_id: uuid.UUID) -> Optional[UserAnalysisResult]:
         pass
-
     @abstractmethod
     def create(self, result_data: UserAnalysisResultCreate) -> UserAnalysisResult:
         pass
-
     @abstractmethod
     def update(self, result_id: uuid.UUID, result_data: UserAnalysisResultUpdate) -> Optional[UserAnalysisResult]:
         pass
-
     @abstractmethod
     def delete(self, result_id: uuid.UUID) -> bool:
+        pass
+    @abstractmethod
+    def get_by_user_id_paginated(self, user_id: uuid.UUID, skip: int, limit: int) -> List[UserAnalysisResult]:
+        pass
+    @abstractmethod
+    def count_by_user_id(self, user_id: uuid.UUID) -> int:
         pass
 
 class UserAnalysisResultRepositoryImpl(UserAnalysisResultRepository):
@@ -64,3 +64,16 @@ class UserAnalysisResultRepositoryImpl(UserAnalysisResultRepository):
             self.db.commit()
             return True
         return False
+
+    def get_by_user_id_paginated(self, user_id: uuid.UUID, skip: int, limit: int) -> List[UserAnalysisResult]:
+        return self.db.query(UserAnalysisResultModel)\
+            .filter(UserAnalysisResultModel.user_id == user_id)\
+            .order_by(UserAnalysisResultModel.analyzed_at.desc())\
+            .offset(skip)\
+            .limit(limit)\
+            .all()
+
+    def count_by_user_id(self, user_id: uuid.UUID) -> int:
+        return self.db.query(func.count(UserAnalysisResultModel.id))\
+            .filter(UserAnalysisResultModel.user_id == user_id)\
+            .scalar() or 0

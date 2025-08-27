@@ -15,6 +15,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0",
     description="BE Slideshow API V2",
+    redirect_slashes=False,
 )
 
 # Setup CORS middleware
@@ -42,21 +43,23 @@ async def shutdown_event():
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+
 @app.get("/")
 async def root():
     return {
         "message": f"Welcome to {settings.PROJECT_NAME}",
         "version": "1.0.0",
         "docs_url": "/docs",
-        "health_check": f"{settings.API_V1_STR}/health"
+        "health_check": f"{settings.API_V1_STR}/health",
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=8000,
-        reload=settings.ENVIRONMENT == "development"
+        reload=settings.ENVIRONMENT == "development",
     )

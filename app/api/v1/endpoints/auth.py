@@ -1,3 +1,4 @@
+# app/routers/auth.py
 from fastapi import APIRouter, Depends, Request, Response, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from app.repositories.user_repository import UserRepository
@@ -10,7 +11,7 @@ from app.utils.password_utils import verify_password, get_password_hash
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
 
-@router.post("/register", response_model=UserSchema)
+@router.post("/register")
 def register_user(
     user_data: UserRegistration,
     user_repo: UserRepository = Depends(get_user_repository),
@@ -21,22 +22,34 @@ def register_user(
 
     hashed_password = get_password_hash(user_data.password)
 
-    # Gunakan UserCreate, bukan UserRegistration
     user_to_create = UserCreate(
         email=user_data.email,
         first_name=user_data.first_name,
         last_name=user_data.last_name,
-        phone=user_data.phone,
-        google_id=user_data.google_id,
+        phone=getattr(user_data, 'phone', None),
+        google_id=getattr(user_data, 'google_id', None),
         password_hash=hashed_password,
     )
 
     new_user = user_repo.create(user_to_create)
-    return new_user
-
+    token = create_access_token({"sub": str(new_user.id)})
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": new_user.id,
+            "email": new_user.email,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name
+        }
+    }
 
 @router.post("/login")
-async def login_user(user_login: UserLogin, user_repo: UserRepository = Depends(get_user_repository)):
+async def login_user(
+    user_login: UserLogin, 
+    user_repo: UserRepository = Depends(get_user_repository)
+):
     user = user_repo.get_by_email(user_login.email)
     if not user or not verify_password(user_login.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
@@ -45,11 +58,28 @@ async def login_user(user_login: UserLogin, user_repo: UserRepository = Depends(
     return {"access_token": token, "token_type": "bearer"}
 
 @router.get("/google/login")
-def google_login(response: Response):
-    return login_google(response)
+def google_login(request: Request, response: Response):
+    user_agent = request.headers.get("user-agent", "").lower()
+    
+    if "swagger" in user_agent or request.headers.get("accept") == "application/json":
+        return login_google(response, return_url=True)
+    else:
+        return login_google(response, return_url=False)
 
 @router.get("/google/callback")
-def google_callback(request: Request, code: str, state: str, user_repo: UserRepository = Depends(get_user_repository)):
+def google_callback(
+    request: Request, 
+    code: str = None,
+    state: str = None,
+    error: str = None,
+    user_repo: UserRepository = Depends(get_user_repository)
+):
+    if error:
+        raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
+    
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing authorization code or state parameter")
+    
     return callback_google(request, code, state, user_repo)
 
 @router.get("/me", response_model=UserSchema)

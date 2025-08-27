@@ -12,9 +12,14 @@ from .product_body_shape_compatibility import ProductBodyShapeCompatibilityModel
 from .product_color_analysis_compatibility import ProductColorAnalysisCompatibilityModel as ProductColorAnalysisCompatibility
 from .product_color import ProductColorModel as ProductColor
 from .product_face_shape_compatibility import ProductFaceShapeCompatibilityModel as ProductFaceShapeCompatibility
+from .order import OrderModel as Order
+from .promo_code import PromoCodeModel as PromoCode
+from .payment import PaymentModel as Payment
+from .product import ProductModel as Product
 
 __all__ = [
     "User",
+    "Product"
     "BMICategory",
     "BodyShape",
     "Celebrity",
@@ -27,5 +32,8 @@ __all__ = [
     "ProductBodyShapeCompatibility",
     "ProductColorAnalysisCompatibility",
     "ProductColor",
-    "ProductFaceShapeCompatibility"
+    "ProductFaceShapeCompatibility",
+    "Order",
+    "PromoCode",
+    "Payment"
 ]

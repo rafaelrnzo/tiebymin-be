@@ -32,7 +32,7 @@ from app.dependencies.dependencies import (
     get_celebrity_repository
 )
 
-router = APIRouter(prefix="/v1/analysis", tags=["Analysis"])
+router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
 @router.post("/full-analysis")
 async def perform_full_analysis(
@@ -59,7 +59,6 @@ async def perform_full_analysis(
     file_content = await foto_wajah.read()
 
     try:
-        # === Analysis ===
         face_shape_result = face_shape_service.predict(image_bytes=file_content)
         color_tone_result = color_tone_service.detect(image_bytes=file_content)
         
@@ -100,7 +99,6 @@ async def perform_full_analysis(
         created_result = result_repo.create(new_analysis_data)
         analysis_result_id = created_result.id
 
-        # === Upload Original ke S3/MinIO ===
         temp_original_path = f"/tmp/{foto_wajah.filename}"
         with open(temp_original_path, "wb") as f:
             f.write(file_content)
@@ -121,7 +119,6 @@ async def perform_full_analysis(
         )
         photo_repo.create(original_photo_data)
 
-        # === Upload Annotated ke S3/MinIO ===
         annotated_bytes, blendshape_data = face_landmark_service.analyze_and_annotate(file_content)
 
         temp_annotated_path = f"/tmp/annotated_{foto_wajah.filename}.png"

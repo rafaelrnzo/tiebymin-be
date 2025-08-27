@@ -19,10 +19,11 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    GOOGLE_CLIENT_ID: Optional[str] = None
+    # 🔥 Updated Google OAuth settings to match your .env
+    GOOGLE_CLIENT_ID: str  # Required
     GOOGLE_CLIENT_SECRET: str
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/v1/auth/google/callback"  
-    GOOGLE_POST_LOGIN_REDIRECT: str = "https://tiebymin-ai.vercel.app/analyze/first"
+    GOOGLE_POST_LOGIN_REDIRECT: Optional[str] = None  # Not set in your .env
     ENVIRONMENT: str = "production"
     
     # 👉 MinIO Config
@@ -31,11 +32,10 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str
     BUCKET_NAME: str = "user-photos"  # default kalau tidak ada di .env
     
-    MODEL_PATH: Optional[str] = None 
     MODEL_LANDMARK_PATH: Optional[str] = None 
 
+    # 🔥 Updated CORS settings to match your .env
     BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
-        "http://localhost:8000",
         "http://localhost:3001", 
         "http://localhost:3000", 
         "http://localhost:3002", 

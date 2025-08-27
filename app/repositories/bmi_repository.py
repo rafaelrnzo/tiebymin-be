@@ -20,29 +20,29 @@ def _schema_to_dict(data) -> dict:
 class BMICategoryRepository(ABC):
     @abstractmethod
     def get_all(self) -> List[BMICategoryModel]:
-        ...
+        pass
 
     @abstractmethod
     def get_by_id(self, category_id: uuid.UUID) -> Optional[BMICategoryModel]:
-        ...
+        pass
 
     @abstractmethod
     def create(self, category_data: BMICategoryCreate) -> BMICategoryModel:
-        ...
+        pass
 
     @abstractmethod
     def update(
         self, category_id: uuid.UUID, category_data: BMICategoryUpdate
     ) -> Optional[BMICategoryModel]:
-        ...
+        pass
 
     @abstractmethod
     def delete(self, category_id: uuid.UUID) -> bool:
-        ...
+        pass
 
     @abstractmethod
     def find_by_bmi_value(self, bmi_value: float) -> Optional[BMICategoryModel]:
-        ...
+        pass
 
 
 class BMICategoryRepositoryImpl(BMICategoryRepository):
