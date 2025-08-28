@@ -20,3 +20,4 @@ pydantic-settings
 loguru
 boto3
 python-jose
+passlib
