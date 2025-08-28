@@ -22,7 +22,8 @@ WORKDIR /app
 # Install deps (cache-friendly)
 COPY requirements.txt ./requirements.txt
 RUN python -m pip install --upgrade pip && \
-    pip install -r requirements.txt
+    pip install -r requirements.txt && \
+    pip install pydantic[email]
 
 # Copy the entire project (this brings in main.py at /app/main.py)
 COPY . .
