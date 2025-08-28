@@ -19,3 +19,4 @@ python-multipart
 pydantic-settings
 loguru
 boto3
+python-jose
