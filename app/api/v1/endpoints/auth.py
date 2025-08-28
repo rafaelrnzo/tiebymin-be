@@ -26,7 +26,7 @@ def register_user(
     user_to_create = UserCreate(
         email=user_data.email,
         first_name=user_data.first_name,
-        last_name=user_data.last_name,
+        last_name=getattr(user_data, 'last_name', None),
         phone=getattr(user_data, 'phone', None),
         google_id=getattr(user_data, 'google_id', None),
         password_hash=hashed_password,

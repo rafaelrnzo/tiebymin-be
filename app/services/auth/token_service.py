@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.repositories.user_repository import UserRepository
 from app.dependencies.dependencies import get_user_repository
 
-def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=30)):
+def create_access_token(data: dict, expires_delta: timedelta = timedelta(days=3)):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})

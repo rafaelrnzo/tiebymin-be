@@ -18,11 +18,9 @@ GOOGLE_TOKEN_URI = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URI = "https://www.googleapis.com/oauth2/v3/userinfo"
 SCOPES = ["openid", "email", "profile"]
 
-# In-memory state storage (use Redis in production)
 active_states: Dict[str, bool] = {}
 
 def build_google_url(state: str) -> str:
-    """Build Google OAuth authorization URL"""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
     if not settings.GOOGLE_REDIRECT_URI:
@@ -41,15 +39,12 @@ def build_google_url(state: str) -> str:
     return f"{GOOGLE_AUTH_URI}?{urlencode(params)}"
 
 def login_google(response: Response, return_url: bool = False):
-    """Initiate Google OAuth login with memory-based state storage"""
     try:
         state = secrets.token_urlsafe(32)  # Longer state for security
         url = build_google_url(state)
         
-        # Store state in memory (use Redis in production)
         active_states[state] = True
         
-        # Clean old states (keep only last 100)
         if len(active_states) > 100:
             old_states = list(active_states.keys())[:-50]
             for old_state in old_states:
@@ -62,7 +57,6 @@ def login_google(response: Response, return_url: bool = False):
                 "state": state
             }
         
-        # Still set cookie as backup
         resp = RedirectResponse(url=url, status_code=302)
         resp.set_cookie(
             "g_state_backup", 
@@ -82,14 +76,11 @@ def login_google(response: Response, return_url: bool = False):
         raise HTTPException(status_code=500, detail=f"Failed to initiate Google login: {str(e)}")
 
 def callback_google(request: Request, code: str, state: str, user_repo: UserRepository):
-    """Handle Google OAuth callback with memory-based state validation"""
     try:
         print(f"Callback received state: {state}")
         print(f"Active states: {list(active_states.keys())[-5:]}")  # Show last 5
         
-        # Check if state exists in memory
         if state not in active_states:
-            # Fallback to cookie check
             cookie_state = request.cookies.get("g_state_backup")
             if cookie_state != state:
                 raise HTTPException(
@@ -97,7 +88,6 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
                     detail="Invalid or expired state parameter. Please restart the authentication flow."
                 )
         
-        # Remove used state
         active_states.pop(state, None)
 
         token_data = {

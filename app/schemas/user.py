@@ -6,7 +6,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     email: EmailStr = Field(..., example="jane.doe@example.com")
     first_name: str = Field(..., example="Jane")
-    last_name: str = Field(..., example="Doe")
+    last_name: Optional[str] = Field(None, example="Doe")
     phone: Optional[str] = Field(None, example="081234567890")
     google_id: Optional[str] = None
 
