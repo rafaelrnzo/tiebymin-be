@@ -22,14 +22,17 @@ WORKDIR /app
 # Install deps (cache-friendly)
 COPY requirements.txt ./requirements.txt
 RUN python -m pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install pydantic[email]
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir alembic psycopg2-binary pydantic[email]
 
-# Copy the entire project (this brings in main.py at /app/main.py)
+# Copy project (main.py, alembic.ini, alembic/ dsb)
 COPY . .
 
-# Do NOT copy .env — env comes from the server/orchestrator
+# Entrypoint: wait DB + alembic migrate (ENV di-inject oleh server)
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 8000
 
-# Start app (main.py is at project root)
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
