@@ -25,14 +25,14 @@ RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir alembic psycopg2-binary pydantic[email]
 
-# Copy project (main.py, alembic.ini, alembic/ dsb)
+# Copy project
 COPY . .
 
-# Entrypoint: wait DB + alembic migrate (ENV di-inject oleh server)
-COPY docker-entrypoint.sh docker-endpoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Entrypoint: wait DB + alembic migrate
+# (file docker-endpoint.sh berada sejajar dengan Dockerfile)
+COPY --chmod=755 docker-endpoint.sh /usr/local/bin/docker-endpoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-endpoint.sh"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

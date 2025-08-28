@@ -48,7 +48,7 @@ if [ -f "alembic.ini" ] && [ -d "$MIGR_DIR" ]; then
     alembic revision --autogenerate -m "auto-initial-$(date +%Y%m%d%H%M%S)" || true
   fi
 
-  # Dev-only: set ALEMBIC_AUTO_GENERATE=1 di server untuk autogen setiap start
+  # Dev-only: set ALEMBIC_AUTO_GENERATE=1 untuk autogen pada start
   if [ "${ALEMBIC_AUTO_GENERATE:-0}" = "1" ]; then
     echo "ALEMBIC_AUTO_GENERATE=1 -> creating autogen revision..."
     alembic revision --autogenerate -m "auto-$(date +%Y%m%d%H%M%S)" || true
