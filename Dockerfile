@@ -29,7 +29,7 @@ RUN python -m pip install --upgrade pip && \
 COPY . .
 
 # Entrypoint: wait DB + alembic migrate (ENV di-inject oleh server)
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker-entrypoint.sh docker-endpoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8000
