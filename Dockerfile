@@ -25,12 +25,19 @@ RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir alembic psycopg2-binary pydantic[email]
 
-# Copy project
+# Copy project (kode + alembic.ini + folder alembic/)
 COPY . .
 
-# Entrypoint: wait DB + alembic migrate
-# (file docker-endpoint.sh berada sejajar dengan Dockerfile)
+# Copy entrypoint (file sejajar dengan Dockerfile)
+RUN mkdir -p alembic/versions
+
 COPY --chmod=755 docker-endpoint.sh /usr/local/bin/docker-endpoint.sh
+
+# Opsional: toggle autogenerate di runtime (bukan saat build)
+# set ALEMBIC_AUTO_GENERATE=1 di env server kalau mau autogen setiap start
+ENV ALEMBIC_AUTO_GENERATE=0
+
+
 
 EXPOSE 8000
 

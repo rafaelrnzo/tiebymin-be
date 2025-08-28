@@ -3,14 +3,12 @@ set -euo pipefail
 
 echo "==> Bootstrapping container..."
 
-# Ambil DB URL dari runtime env server/panel
 DB_URL="${DATABASE_URL:-${DB_URL:-${SQLALCHEMY_DATABASE_URI:-${POSTGRES_URL:-}}}}"
 if [ -z "${DB_URL}" ]; then
   echo "ERROR: DATABASE_URL (atau DB_URL/SQLALCHEMY_DATABASE_URI/POSTGRES_URL) tidak ditemukan di environment." >&2
   exit 1
 fi
 
-# psycopg2 pakai 'postgresql://', bukan 'postgresql+psycopg2://'
 DB_URL_PG="${DB_URL//postgresql+psycopg2/postgresql}"
 export DB_URL_PG
 
@@ -33,13 +31,9 @@ else:
     sys.exit(1)
 PYCODE
 
-# Tentukan folder migrations
 MIGR_DIR="alembic"
-if [ ! -d "$MIGR_DIR" ] && [ -d "migrations" ]; then
-  MIGR_DIR="migrations"
-fi
+[ ! -d "$MIGR_DIR" ] && [ -d "migrations" ] && MIGR_DIR="migrations"
 
-# Jalankan Alembic jika tersedia
 if [ -f "alembic.ini" ] && [ -d "$MIGR_DIR" ]; then
   echo "==> Running Alembic (dir: $MIGR_DIR)"
   VERS_DIR="$MIGR_DIR/versions"
@@ -48,7 +42,6 @@ if [ -f "alembic.ini" ] && [ -d "$MIGR_DIR" ]; then
     alembic revision --autogenerate -m "auto-initial-$(date +%Y%m%d%H%M%S)" || true
   fi
 
-  # Dev-only: set ALEMBIC_AUTO_GENERATE=1 untuk autogen pada start
   if [ "${ALEMBIC_AUTO_GENERATE:-0}" = "1" ]; then
     echo "ALEMBIC_AUTO_GENERATE=1 -> creating autogen revision..."
     alembic revision --autogenerate -m "auto-$(date +%Y%m%d%H%M%S)" || true

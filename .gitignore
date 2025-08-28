@@ -67,3 +67,6 @@ Thumbs.db
 .minio-setup
 minio-setup/
 
+alembic/versions/*
+!alembic/versions/.gitkeep
+
