@@ -16,6 +16,7 @@ def register_user(
     user_data: UserRegistration,
     user_repo: UserRepository = Depends(get_user_repository),
 ):
+    """Register a new user and return access token"""
     existing_user = user_repo.get_by_email(user_data.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -50,6 +51,7 @@ async def login_user(
     user_login: UserLogin, 
     user_repo: UserRepository = Depends(get_user_repository)
 ):
+    """Login with email and password"""
     user = user_repo.get_by_email(user_login.email)
     if not user or not verify_password(user_login.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
@@ -59,6 +61,7 @@ async def login_user(
 
 @router.get("/google/login")
 def google_login(request: Request, response: Response):
+    """Initiate Google OAuth login"""
     user_agent = request.headers.get("user-agent", "").lower()
     
     if "swagger" in user_agent or request.headers.get("accept") == "application/json":
@@ -74,6 +77,7 @@ def google_callback(
     error: str = None,
     user_repo: UserRepository = Depends(get_user_repository)
 ):
+    """Handle Google OAuth callback"""
     if error:
         raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
     
@@ -84,4 +88,5 @@ def google_callback(
 
 @router.get("/me", response_model=UserSchema)
 async def read_current_user(current_user: UserSchema = Depends(get_current_user)):
+    """Get current authenticated user"""
     return current_user

@@ -13,7 +13,7 @@ class User(Base):
     password_hash = Column(String, nullable=True)
     phone = Column(String, unique=True, nullable=True)
     first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=True)
     profile_picture_url = Column(String, nullable=True)
     email_verified_at = Column(TIMESTAMP, nullable=True)
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
