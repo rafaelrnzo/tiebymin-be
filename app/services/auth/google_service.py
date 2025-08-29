@@ -27,7 +27,7 @@ def build_google_url(state: str) -> str:
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "response_type": "code",
-        "redirect_uri": settings.GOOGLE_REDIRECT_URI,  # Use the configured redirect URI directly
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI,  # FIXED: Don't add extra path
         "scope": " ".join(SCOPES),
         "access_type": "offline",
         "prompt": "consent",
@@ -51,7 +51,7 @@ def login_google(response: Response):
             httponly=True, 
             max_age=600, 
             samesite="lax",
-            secure=settings.ENVIRONMENT == "production",  # Use secure cookies in production
+            secure=settings.ENVIRONMENT == "production",
             path="/"
         )
         return resp
@@ -80,7 +80,7 @@ def login_google_with_request(request: Request, response: Response, return_url: 
             httponly=True, 
             max_age=600, 
             samesite="lax",
-            secure=settings.ENVIRONMENT == "production",  
+            secure=settings.ENVIRONMENT == "production",
             path="/"
         )
         return resp
@@ -98,7 +98,7 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": settings.GOOGLE_REDIRECT_URI, 
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,  # FIXED: Use same URI as in OAuth request
             "grant_type": "authorization_code",
         }
         
@@ -159,20 +159,18 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
             user = user_repo.create(user_to_create)
         elif not user.google_id:
             user_repo.update_google_id(user.id, google_id)
-            user.google_id = google_id  # Update the local object as well
+            user.google_id = google_id
 
         jwt_token = create_access_token(data={"sub": str(user.id)})
         
-        # Clean up the state cookie
-        resp_data = {"access_token": jwt_token, "token_type": "bearer"}
-        
+        # Clean up the state cookie and return response
         if hasattr(settings, 'GOOGLE_POST_LOGIN_REDIRECT') and settings.GOOGLE_POST_LOGIN_REDIRECT:
             redirect_url = f"{settings.GOOGLE_POST_LOGIN_REDIRECT}#access_token={jwt_token}&token_type=bearer"
             resp = RedirectResponse(url=redirect_url, status_code=302)
             resp.delete_cookie(STATE_COOKIE_NAME, path="/", samesite="lax")
             return resp
         else:
-            return resp_data
+            return {"access_token": jwt_token, "token_type": "bearer"}
         
     except HTTPException:
         raise
