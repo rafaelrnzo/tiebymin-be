@@ -40,9 +40,9 @@ RUN dos2unix /usr/local/bin/docker-endpoint.sh || true
 
 # === Disable Alembic by default ===
 # Bisa dioverride di runtime: -e RUN_ALEMBIC=1 (kalau suatu saat mau pakai)
-ENV RUN_ALEMBIC=0
-ENV ALEMBIC_AUTO_GENERATE=0
-ENV ALEMBIC_STAMP_IF_MISSING=0
+# ENV RUN_ALEMBIC=0
+# ENV ALEMBIC_AUTO_GENERATE=0
+# ENV ALEMBIC_STAMP_IF_MISSING=0
 
 EXPOSE 8000
 
