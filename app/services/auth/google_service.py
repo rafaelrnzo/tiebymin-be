@@ -1,3 +1,4 @@
+
 # app/services/auth/google_service.py
 import uuid
 import secrets
@@ -19,8 +20,6 @@ SCOPES = ["openid", "email", "profile"]
 STATE_COOKIE_NAME = "g_state"
 
 def build_google_url(state: str) -> str:
-    """Build Google OAuth authorization URL"""
-    # 🔥 Validate required settings first
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
     if not settings.GOOGLE_REDIRECT_URI:
@@ -36,18 +35,16 @@ def build_google_url(state: str) -> str:
         "state": state,
     }
     
-    print(f"🔥 Google OAuth URL: {GOOGLE_AUTH_URI}?{urlencode(params)}")  # Debug log
+    print(f"🔥 Google OAuth URL: {GOOGLE_AUTH_URI}?{urlencode(params)}") 
     return f"{GOOGLE_AUTH_URI}?{urlencode(params)}"
 
 def login_google(response: Response):
-    """Initiate Google OAuth login"""
     try:
         state = secrets.token_urlsafe(24)
         url = build_google_url(state)
         
-        print(f"🔥 Redirecting to: {url}")  # Debug log
+        print(f"🔥 Redirecting to: {url}") 
         
-        # Create redirect response with explicit status code 302
         resp = RedirectResponse(url=url, status_code=302)
         resp.set_cookie(
             STATE_COOKIE_NAME, 
@@ -55,7 +52,7 @@ def login_google(response: Response):
             httponly=True, 
             max_age=600, 
             samesite="lax",
-            secure=False,  # Set to False for localhost testing
+            secure=False, 
             path="/"
         )
         return resp
@@ -63,15 +60,42 @@ def login_google(response: Response):
         print(f"🔥 Error in login_google: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to initiate Google login: {str(e)}")
 
-def callback_google(request: Request, code: str, state: str, user_repo: UserRepository):
-    """Handle Google OAuth callback"""
+
+def login_google_with_request(request: Request, response: Response, return_url: bool = False):
     try:
-        # Validate state parameter
+        state = secrets.token_urlsafe(24)
+        url = build_google_url(state)
+        
+        if return_url:
+            return {
+                "google_oauth_url": url,
+                "state": state,
+                "message": "Open this URL in your browser to complete OAuth"
+            }
+        
+        print(f"🔥 Redirecting to: {url}") 
+        
+        resp = RedirectResponse(url=url, status_code=302)
+        resp.set_cookie(
+            STATE_COOKIE_NAME, 
+            state, 
+            httponly=True, 
+            max_age=600, 
+            samesite="lax",
+            secure=False, 
+            path="/"
+        )
+        return resp
+    except Exception as e:
+        print(f"🔥 Error in login_google_with_request: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to initiate Google login: {str(e)}")
+
+def callback_google(request: Request, code: str, state: str, user_repo: UserRepository):
+    try:
         cookie_state = request.cookies.get(STATE_COOKIE_NAME)
         if not cookie_state or cookie_state != state:
             raise HTTPException(status_code=400, detail="Invalid state parameter")
 
-        # Exchange authorization code for access token
         token_data = {
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -87,7 +111,6 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
             headers={"Content-Type": "application/x-www-form-urlencoded"}
         )
         
-        # Check if token request was successful
         if token_resp.status_code != 200:
             raise HTTPException(
                 status_code=400, 
@@ -96,7 +119,6 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
         
         token_json = token_resp.json()
         
-        # Check for errors in token response
         if "error" in token_json:
             raise HTTPException(
                 status_code=400, 
@@ -107,7 +129,6 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
         if not access_token:
             raise HTTPException(status_code=400, detail="Access token not received from Google")
 
-        # Get user information from Google
         headers = {"Authorization": f"Bearer {access_token}"}
         userinfo_resp = requests.get(GOOGLE_USERINFO_URI, headers=headers, timeout=15)
         
@@ -119,7 +140,6 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
         
         userinfo = userinfo_resp.json()
 
-        # Validate required user information
         email = userinfo.get("email")
         google_id = userinfo.get("sub")
         
@@ -128,11 +148,9 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
         if not google_id:
             raise HTTPException(status_code=400, detail="Google ID not provided by Google")
 
-        # Check if user exists
         user = user_repo.get_by_email(email=email)
         
         if not user:
-            # Create new user
             user_to_create = UserCreate(
                 email=email,
                 first_name=userinfo.get("given_name", ""),
@@ -142,131 +160,22 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
             )
             user = user_repo.create(user_to_create)
         elif not user.google_id:
-            # Update existing user with Google ID
             user_repo.update_google_id(user.id, google_id)
             user.google_id = google_id  # Update the local object as well
 
-        # Create JWT token
         jwt_token = create_access_token(data={"sub": str(user.id)})
         
-        # Create response with token and clear state cookie
         if hasattr(settings, 'GOOGLE_POST_LOGIN_REDIRECT') and settings.GOOGLE_POST_LOGIN_REDIRECT:
             redirect_url = f"{settings.GOOGLE_POST_LOGIN_REDIRECT}#access_token={jwt_token}&token_type=bearer"
             resp = RedirectResponse(url=redirect_url, status_code=302)
             resp.delete_cookie(STATE_COOKIE_NAME, samesite="lax")
             return resp
         else:
-            # For API response, we can't clear cookies directly, so we'll return the token
             return {"access_token": jwt_token, "token_type": "bearer"}
         
     except HTTPException:
-        # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        # Log the full error for debugging
         print(f"Google OAuth callback error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error during Google authentication: {str(e)}")
 
-
-# app/routers/auth.py
-from fastapi import APIRouter, Depends, Request, Response, HTTPException
-from fastapi.security import OAuth2PasswordBearer
-from app.repositories.user_repository import UserRepository
-from app.dependencies.dependencies import get_user_repository
-from app.schemas.user import User as UserSchema, UserRegistration, UserLogin, UserCreate
-from app.services.auth.token_service import get_current_user, create_access_token
-from app.services.auth.google_service import login_google, callback_google
-from app.utils.password_utils import verify_password, get_password_hash
-
-router = APIRouter(prefix="/auth", tags=["Authentication"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
-
-@router.post("/register", response_model=UserSchema)
-def register_user(
-    user_data: UserRegistration,
-    user_repo: UserRepository = Depends(get_user_repository),
-):
-    """Register a new user"""
-    existing_user = user_repo.get_by_email(user_data.email)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    hashed_password = get_password_hash(user_data.password)
-
-    user_to_create = UserCreate(
-        email=user_data.email,
-        first_name=user_data.first_name,
-        last_name=user_data.last_name,
-        phone=getattr(user_data, 'phone', None),
-        google_id=getattr(user_data, 'google_id', None),
-        password_hash=hashed_password,
-    )
-
-    new_user = user_repo.create(user_to_create)
-    return new_user
-
-@router.post("/login")
-async def login_user(
-    user_login: UserLogin, 
-    user_repo: UserRepository = Depends(get_user_repository)
-):
-    """Login with email and password"""
-    user = user_repo.get_by_email(user_login.email)
-    if not user or not verify_password(user_login.password, user.password_hash):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
-
-    token = create_access_token({"sub": str(user.id)})
-    return {"access_token": token, "token_type": "bearer"}
-
-# 🔥 Debug endpoint to check configuration
-@router.get("/debug/google")
-def debug_google_config():
-    """Debug Google OAuth configuration"""
-    from app.core.config import settings
-    return {
-        "google_client_id": settings.GOOGLE_CLIENT_ID[:20] + "..." if settings.GOOGLE_CLIENT_ID else "NOT SET",
-        "google_client_secret": "SET" if settings.GOOGLE_CLIENT_SECRET else "NOT SET",
-        "google_redirect_uri": settings.GOOGLE_REDIRECT_URI,
-        "cors_origins": settings.BACKEND_CORS_ORIGINS,
-        "environment": settings.ENVIRONMENT
-    }
-
-# 🔥 Debug endpoint to test Google URL generation
-@router.get("/google/test-url")
-def test_google_url():
-    """Test Google OAuth URL generation"""
-    state = secrets.token_urlsafe(24)
-    url = build_google_url(state)
-    return {
-        "google_oauth_url": url,
-        "state": state,
-        "instructions": "Copy the google_oauth_url and paste it in your browser to test the OAuth flow manually"
-    }
-
-@router.get("/google/login")
-def google_login(response: Response):
-    """Initiate Google OAuth login"""
-    return login_google(response)
-
-@router.get("/google/callback")
-def google_callback(
-    request: Request, 
-    code: str = None,
-    state: str = None,
-    error: str = None,
-    user_repo: UserRepository = Depends(get_user_repository)
-):
-    """Handle Google OAuth callback"""
-    # 🔥 Add error handling for Google OAuth errors
-    if error:
-        raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
-    
-    if not code or not state:
-        raise HTTPException(status_code=400, detail="Missing authorization code or state parameter")
-    
-    return callback_google(request, code, state, user_repo)
-
-@router.get("/me", response_model=UserSchema)
-async def read_current_user(current_user: UserSchema = Depends(get_current_user)):
-    """Get current authenticated user"""
-    return current_user
