@@ -1,4 +1,3 @@
-# app/routers/auth.py
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Response, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -16,12 +15,14 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
+
 class UserRegistrationOptional(BaseModel):
     email: EmailStr
     first_name: str
     last_name: Optional[str] = None
     password: str
     phone: Optional[str] = None
+
 
 @router.post("/register")
 def register_user(
@@ -57,6 +58,7 @@ def register_user(
         },
     }
 
+
 @router.post("/login")
 async def login_user(
     user_login: UserLogin,
@@ -69,16 +71,18 @@ async def login_user(
     token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
 
+
 @router.get("/google/login")
 def google_login(request: Request, response: Response):
     redirect_uri = settings.google_redirect(request)
-    settings.GOOGLE_REDIRECT_URI = redirect_uri 
+    settings.GOOGLE_REDIRECT_URI = redirect_uri  # optional update
 
     ua = request.headers.get("user-agent", "").lower()
     accept = request.headers.get("accept", "").lower()
     is_swagger_like = "swagger" in ua or "application/json" in accept
 
-    return login_google(response, return_url=is_swagger_like)
+    return login_google(request, response, return_url=is_swagger_like)
+
 
 @router.get("/google/callback", name="callback_google")
 def google_callback(
@@ -97,6 +101,7 @@ def google_callback(
     settings.GOOGLE_REDIRECT_URI = redirect_uri
 
     return callback_google(request, code, state, user_repo)
+
 
 @router.get("/me", response_model=UserSchema)
 async def read_current_user(current_user: UserSchema = Depends(get_current_user)):
