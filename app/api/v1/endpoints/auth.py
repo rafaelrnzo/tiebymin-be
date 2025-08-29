@@ -80,7 +80,7 @@ def google_login(request: Request, response: Response):
     accept = request.headers.get("accept", "").lower()
     is_swagger_like = "swagger" in ua or "application/json" in accept
 
-    return login_google(response, return_url=is_swagger_like)
+    return login_google(request, response, return_url=is_swagger_like)
 
 @router.get("/google/callback", name="callback_google")
 def google_callback(

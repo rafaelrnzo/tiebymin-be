@@ -1,4 +1,4 @@
-# app/services/auth/google_service_stateless.py
+# app/services/auth/google_service_dynamic.py
 import uuid
 import secrets
 import requests
@@ -17,14 +17,24 @@ GOOGLE_TOKEN_URI = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URI = "https://www.googleapis.com/oauth2/v3/userinfo"
 SCOPES = ["openid", "email", "profile"]
 
-def build_google_url() -> str:
-    """Build Google OAuth authorization URL without state"""
+def get_dynamic_redirect_uri(request: Request) -> str:
+    """Get the redirect URI based on the current request"""
+    host = request.headers.get("host")
+    scheme = "https" if request.headers.get("x-forwarded-proto") == "https" or "easypanel" in str(host) else "http"
+    
+    # For your specific domains
+    if "easypanel.host" in str(host):
+        scheme = "https"
+    elif "localhost" in str(host):
+        scheme = "http"
+    
+    return f"{scheme}://{host}/v1/auth/google/callback"
+
+def build_google_url(redirect_uri: str) -> str:
+    """Build Google OAuth authorization URL"""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
         
-    # Use a fixed redirect URI
-    redirect_uri = "http://localhost:8000/v1/auth/google/callback"
-    
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
         "response_type": "code",
@@ -36,14 +46,19 @@ def build_google_url() -> str:
     
     return f"{GOOGLE_AUTH_URI}?{urlencode(params)}"
 
-def login_google_stateless(response: Response, return_url: bool = False):
-    """Initiate Google OAuth login without state parameter"""
+def login_google_dynamic(request: Request, response: Response, return_url: bool = False):
+    """Initiate Google OAuth login with dynamic redirect URI"""
     try:
-        url = build_google_url()
+        redirect_uri = get_dynamic_redirect_uri(request)
+        url = build_google_url(redirect_uri)
+        
+        print(f"Using redirect URI: {redirect_uri}")
+        print(f"Google OAuth URL: {url}")
         
         if return_url:
             return {
                 "google_oauth_url": url,
+                "redirect_uri": redirect_uri,
                 "message": "Copy this URL and open it in your browser to authenticate with Google"
             }
         
@@ -51,11 +66,12 @@ def login_google_stateless(response: Response, return_url: bool = False):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to initiate Google login: {str(e)}")
 
-def callback_google_stateless(request: Request, code: str, user_repo: UserRepository):
-    """Handle Google OAuth callback without state validation"""
+def callback_google_dynamic(request: Request, code: str, user_repo: UserRepository):
+    """Handle Google OAuth callback with dynamic redirect URI"""
     try:
-        # Use fixed redirect URI to match what we sent to Google
-        redirect_uri = "http://localhost:8000/v1/auth/google/callback"
+        redirect_uri = get_dynamic_redirect_uri(request)
+        
+        print(f"Callback using redirect URI: {redirect_uri}")
         
         token_data = {
             "code": code,
@@ -73,6 +89,7 @@ def callback_google_stateless(request: Request, code: str, user_repo: UserReposi
         )
         
         if token_resp.status_code != 200:
+            print(f"Token request failed: {token_resp.text}")
             raise HTTPException(
                 status_code=400, 
                 detail=f"Failed to get access token from Google: {token_resp.text}"
@@ -125,6 +142,7 @@ def callback_google_stateless(request: Request, code: str, user_repo: UserReposi
                 )
                 user = user_repo.create(user_to_create)
             except Exception as e:
+                print(f"Failed to create user: {str(e)}")
                 raise HTTPException(
                     status_code=500, 
                     detail=f"Failed to create user account: {str(e)}"
@@ -135,22 +153,19 @@ def callback_google_stateless(request: Request, code: str, user_repo: UserReposi
 
         jwt_token = create_access_token(data={"sub": str(user.id)})
         
-        if hasattr(settings, 'GOOGLE_POST_LOGIN_REDIRECT') and settings.GOOGLE_POST_LOGIN_REDIRECT:
-            redirect_url = f"{settings.GOOGLE_POST_LOGIN_REDIRECT}?access_token={jwt_token}&token_type=bearer"
-            return RedirectResponse(url=redirect_url, status_code=302)
-        else:
-            return {
-                "access_token": jwt_token, 
-                "token_type": "bearer",
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name
-                }
+        return {
+            "access_token": jwt_token, 
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name
             }
+        }
         
     except HTTPException:
         raise
     except Exception as e:
+        print(f"Callback error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error during Google authentication: {str(e)}")
