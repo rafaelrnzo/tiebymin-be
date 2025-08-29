@@ -3,7 +3,7 @@ cat >/app/reset_and_migrate.sh <<'BASH'
 set -euo pipefail
 
 # ====== KONFIG ======
-DB_HOST="${DB_HOST:-minecraft-server_tiebymin-db}"   # ganti kalau host Postgres kamu beda (mis. tiebymin-db)
+DB_HOST="tiebymin-db"
 DB_USER="${DB_USER:-admin}"
 DB_PASS="${DB_PASS:-admin.admin}"
 DB_NAME="${DB_NAME:-tiebymin_db}"

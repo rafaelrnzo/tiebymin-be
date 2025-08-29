@@ -3,20 +3,30 @@ set -euo pipefail
 
 echo "==> Bootstrapping container..."
 
+# Ambil URL dari env (urutan prioritas)
 DB_URL="${DATABASE_URL:-${DB_URL:-${SQLALCHEMY_DATABASE_URI:-${POSTGRES_URL:-}}}}"
 if [ -z "${DB_URL}" ]; then
   echo "ERROR: DATABASE_URL (atau DB_URL/SQLALCHEMY_DATABASE_URI/POSTGRES_URL) tidak ditemukan di environment." >&2
   exit 1
 fi
 
-DB_URL_PG="${DB_URL//postgresql+psycopg2/postgresql}"
+# Ganti prefix agar psycopg2 paham
+DB_URL_PG="$(echo "$DB_URL" | sed 's#postgresql+psycopg2#postgresql#')"
 export DB_URL_PG
 
-echo "==> Waiting for Postgres: $DB_URL_PG"
+echo "==> Using DATABASE_URL: $DATABASE_URL"
+echo "==> Normalized for psycopg2: $DB_URL_PG"
+
+echo "==> Waiting for Postgres..."
 python - <<'PYCODE'
-import os, sys, time
-import psycopg2
+import os, sys, time, psycopg2, urllib.parse
+
 url = os.environ.get("DB_URL_PG") or ""
+print(f"Parsed DSN: {url}")
+
+db_name = urllib.parse.urlparse(url).path.lstrip("/")
+print(f"Target database: {db_name}")
+
 for i in range(60):
     try:
         conn = psycopg2.connect(url)
@@ -31,9 +41,9 @@ else:
     sys.exit(1)
 PYCODE
 
-RUN_ALEMBIC="${RUN_ALEMBIC:-1}"  # set 0 untuk skip total
-ALEMBIC_STAMP_IF_MISSING="${ALEMBIC_STAMP_IF_MISSING:-0}"  # set 1 untuk auto 'alembic stamp head' jika missing revision
-ALEMBIC_AUTO_GENERATE="${ALEMBIC_AUTO_GENERATE:-0}"  # set 1 untuk autogenerate revision (dev)
+RUN_ALEMBIC="${RUN_ALEMBIC:-1}"  
+ALEMBIC_STAMP_IF_MISSING="${ALEMBIC_STAMP_IF_MISSING:-0}"  
+ALEMBIC_AUTO_GENERATE="${ALEMBIC_AUTO_GENERATE:-0}"  
 
 MIGR_DIR="alembic"
 [ ! -d "$MIGR_DIR" ] && [ -d "migrations" ] && MIGR_DIR="migrations"
