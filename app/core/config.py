@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     MINIO_ENDPOINT: str
     MINIO_ACCESS_KEY: str
     MINIO_SECRET_KEY: str
-    BUCKET_NAME: str = "user-photos"
+    MINIO_BUCKET: str = "user-photos"
 
     # ======================
     # Models / Misc
