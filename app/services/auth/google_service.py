@@ -18,8 +18,10 @@ GOOGLE_USERINFO_URI = "https://www.googleapis.com/oauth2/v3/userinfo"
 SCOPES = ["openid", "email", "profile"]
 
 def get_dynamic_redirect_uri(request: Request) -> str:
-    """Get the redirect URI based on the current request"""
     host = request.headers.get("host")
+    
+    print(f"Host header: {host}")
+    print(f"All headers: {dict(request.headers)}")
     
     if "easypanel.host" in str(host):
         scheme = "https"
@@ -28,10 +30,12 @@ def get_dynamic_redirect_uri(request: Request) -> str:
     else:
         scheme = "https" if request.headers.get("x-forwarded-proto") == "https" else "http"
     
-    return f"{scheme}://{host}/v1/auth/google/callback"
+    redirect_uri = f"{scheme}://{host}/v1/auth/google/callback"
+    print(f"Generated redirect URI: {redirect_uri}")
+    
+    return redirect_uri
 
 def build_google_url(redirect_uri: str) -> str:
-    """Build Google OAuth authorization URL"""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
         
@@ -67,7 +71,6 @@ def login_google(request: Request, response: Response, return_url: bool = False)
         raise HTTPException(status_code=500, detail=f"Failed to initiate Google login: {str(e)}")
 
 def callback_google(request: Request, code: str, state: str, user_repo: UserRepository):
-    """Handle Google OAuth callback with dynamic redirect URI"""
     try:
         redirect_uri = get_dynamic_redirect_uri(request)
         
