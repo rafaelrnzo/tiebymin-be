@@ -1,9 +1,7 @@
 import uuid
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
 
 from app.schemas.celebrity import Celebrity, CelebrityCreate, CelebrityUpdate
 from app.models.celebrity import CelebrityModel
@@ -27,6 +25,10 @@ class CelebrityRepository(ABC):
 
     @abstractmethod
     def delete(self, celebrity_id: uuid.UUID) -> bool:
+        pass
+    
+    @abstractmethod
+    def find_id_by_match(self, face_shape_id: uuid.UUID, color_analysis_id: uuid.UUID) -> Optional[uuid.UUID]:
         pass
 
 class CelebrityRepositoryImpl(CelebrityRepository):
@@ -63,3 +65,11 @@ class CelebrityRepositoryImpl(CelebrityRepository):
             self.db.commit()
             return True
         return False
+
+    def find_id_by_match(self, face_shape_id: uuid.UUID, color_analysis_id: uuid.UUID) -> Optional[uuid.UUID]:
+        celebrity = self.db.query(CelebrityModel).filter(
+            CelebrityModel.faceshape_id == face_shape_id,
+            CelebrityModel.color_analysis_id == color_analysis_id
+        ).first()
+        
+        return celebrity.id if celebrity else None
