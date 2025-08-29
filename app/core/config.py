@@ -1,4 +1,4 @@
-# app/core/settings.py
+# app/core/config.py
 from typing import Optional, List, Union
 from pydantic import AnyHttpUrl, validator
 from pydantic_settings import BaseSettings
@@ -18,8 +18,11 @@ class Settings(BaseSettings):
 
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
-    GOOGLE_REDIRECT_URI: str  # Make this required, not optional
+
+    # IMPORTANT: make this optional so the validator can compute a default
+    GOOGLE_REDIRECT_URI: Optional[str] = None
     GOOGLE_POST_LOGIN_REDIRECT: Optional[AnyHttpUrl] = None
+
     ENVIRONMENT: str = "production"
 
     MINIO_ENDPOINT: str
@@ -51,16 +54,17 @@ class Settings(BaseSettings):
     @validator("GOOGLE_REDIRECT_URI", pre=True)
     @classmethod
     def build_google_redirect_uri(cls, v, values):
+        # If provided explicitly, keep it
         if v:
             return v
-        
+
+        # Otherwise derive from PUBLIC_BASE_URL, else default to localhost
         public_base = values.get("PUBLIC_BASE_URL")
         api_v1 = values.get("API_V1_STR", "/v1")
-        
         if public_base:
             base_url = str(public_base).rstrip("/")
             return f"{base_url}{api_v1}/auth/google/callback"
-        
+
         return "http://localhost:8000/v1/auth/google/callback"
 
     class Config:
