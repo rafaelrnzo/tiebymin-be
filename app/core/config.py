@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     GOOGLE_CLIENT_ID: str  # Required
     GOOGLE_CLIENT_SECRET: str
-    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/v1/auth/google/callback"  
+    GOOGLE_REDIRECT_URI: str 
     GOOGLE_POST_LOGIN_REDIRECT: Optional[str] = None  # Not set in your .env
     ENVIRONMENT: str = "production"
     
@@ -55,14 +55,11 @@ class Settings(BaseSettings):
         case_sensitive = True
     
     def google_redirect(self, request: Request = None) -> str:
-        """Generate Google redirect URI based on request or use default"""
-        # If you want dynamic redirect URI based on request host
         if request:
             host = request.headers.get("host", "localhost:8000")
             scheme = "https" if request.url.scheme == "https" else "http"
             return f"{scheme}://{host}/v1/auth/google/callback"
         
-        # Otherwise use the configured redirect URI
         return self.GOOGLE_REDIRECT_URI
 
 
