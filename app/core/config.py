@@ -1,11 +1,8 @@
 # app/core/settings.py
-from typing import Optional, List, Union, TYPE_CHECKING
+from typing import Optional, List, Union
 from pydantic import AnyHttpUrl, validator
 from pydantic_settings import BaseSettings
 import json
-
-if TYPE_CHECKING:
-    from fastapi import Request
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/v1"
@@ -21,7 +18,7 @@ class Settings(BaseSettings):
 
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
-    GOOGLE_REDIRECT_URI: Optional[AnyHttpUrl] = None
+    GOOGLE_REDIRECT_URI: str  # Make this required, not optional
     GOOGLE_POST_LOGIN_REDIRECT: Optional[AnyHttpUrl] = None
     ENVIRONMENT: str = "production"
 
@@ -33,8 +30,6 @@ class Settings(BaseSettings):
     MODEL_LANDMARK_PATH: Optional[str] = None
 
     PUBLIC_BASE_URL: Optional[AnyHttpUrl] = None
-
-    GOOGLE_REDIRECT_PATH: str = "/v1/auth/google/callback"
 
     BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:3001",
@@ -53,22 +48,23 @@ class Settings(BaseSettings):
                 return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
+    @validator("GOOGLE_REDIRECT_URI", pre=True)
+    @classmethod
+    def build_google_redirect_uri(cls, v, values):
+        if v:
+            return v
+        
+        public_base = values.get("PUBLIC_BASE_URL")
+        api_v1 = values.get("API_V1_STR", "/v1")
+        
+        if public_base:
+            base_url = str(public_base).rstrip("/")
+            return f"{base_url}{api_v1}/auth/google/callback"
+        
+        return "http://localhost:8000/v1/auth/google/callback"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
-
-    def _build_url(self, path: str, base: Optional[str] = None) -> str:
-        base = (base or (self.PUBLIC_BASE_URL or "http://localhost:8000")).rstrip("/")
-        return f"{base}{path}"
-
-    def google_redirect(self, request: Optional["Request"] = None) -> str:
-        if self.GOOGLE_REDIRECT_URI:
-            return str(self.GOOGLE_REDIRECT_URI)
-
-        if request is not None:
-            return str(request.url_for("callback_google"))
-
-        return self._build_url(self.GOOGLE_REDIRECT_PATH)
-
 
 settings = Settings()
