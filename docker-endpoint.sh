@@ -31,25 +31,59 @@ else:
     sys.exit(1)
 PYCODE
 
+# ===== Alembic (opsional) =====
+RUN_ALEMBIC="${RUN_ALEMBIC:-1}"  # set 0 untuk skip total
+ALEMBIC_STAMP_IF_MISSING="${ALEMBIC_STAMP_IF_MISSING:-0}"  # set 1 untuk auto 'alembic stamp head' jika missing revision
+ALEMBIC_AUTO_GENERATE="${ALEMBIC_AUTO_GENERATE:-0}"  # set 1 untuk autogenerate revision (dev)
+
 MIGR_DIR="alembic"
 [ ! -d "$MIGR_DIR" ] && [ -d "migrations" ] && MIGR_DIR="migrations"
 
-if [ -f "alembic.ini" ] && [ -d "$MIGR_DIR" ]; then
+if [ "$RUN_ALEMBIC" != "0" ] && [ -f "alembic.ini" ] && [ -d "$MIGR_DIR" ]; then
   echo "==> Running Alembic (dir: $MIGR_DIR)"
   VERS_DIR="$MIGR_DIR/versions"
+
+  # Jika folder versions kosong (karena di-ignore Git), boleh autogenerate initial (dev only)
   if [ -d "$VERS_DIR" ] && [ -z "$(ls -A "$VERS_DIR" 2>/dev/null || true)" ]; then
-    echo "No migrations found. Autogenerating initial revision..."
+    echo "No migrations found. Autogenerating initial revision (dev only)..."
     alembic revision --autogenerate -m "auto-initial-$(date +%Y%m%d%H%M%S)" || true
   fi
 
-  if [ "${ALEMBIC_AUTO_GENERATE:-0}" = "1" ]; then
+  if [ "$ALEMBIC_AUTO_GENERATE" = "1" ]; then
     echo "ALEMBIC_AUTO_GENERATE=1 -> creating autogen revision..."
     alembic revision --autogenerate -m "auto-$(date +%Y%m%d%H%M%S)" || true
   fi
 
-  alembic upgrade head
+  # Jalankan upgrade head; jika gagal karena missing revision, opsi auto-stamp
+  set +e
+  UPG_OUT="$(alembic upgrade head 2>&1)"
+  UPG_CODE="$?"
+  set -e
+  echo "$UPG_OUT"
+
+  if [ "$UPG_CODE" -ne 0 ]; then
+    if echo "$UPG_OUT" | grep -q "Can't locate revision identified by"; then
+      MISSING_ID="$(printf "%s" "$UPG_OUT" | sed -n "s/.*identified by '\([0-9a-f]\+\)'.*/\1/p" | head -n1)"
+      echo "==> Detected missing revision in DB: ${MISSING_ID:-<unknown>}"
+
+      if [ "$ALEMBIC_STAMP_IF_MISSING" = "1" ]; then
+        echo "==> ALEMBIC_STAMP_IF_MISSING=1 -> Stamping DB to current head (ASSUMES schema matches code)"
+        alembic stamp head
+        echo "==> Stamp complete. Continuing startup."
+      else
+        echo "ERROR: Alembic upgrade failed karena revision hilang di repo."
+        echo "Tips:"
+        echo "  - Set RUN_ALEMBIC=0 untuk skip Alembic sama sekali (recommended kalau kamu ignore migrations)."
+        echo "  - Atau set ALEMBIC_STAMP_IF_MISSING=1 untuk auto 'alembic stamp head' (gunakan dengan paham risikonya)."
+        exit 1
+      fi
+    else
+      echo "ERROR: Alembic failed (non-missing-revision). Lihat output di atas."
+      exit "$UPG_CODE"
+    fi
+  fi
 else
-  echo "==> Alembic not configured (alembic.ini atau folder alembic/ tidak ada). Skipping."
+  echo "==> Alembic skipped (RUN_ALEMBIC=0 atau alembic.ini/folder tidak ada)."
 fi
 
 echo "==> Starting app: $*"
