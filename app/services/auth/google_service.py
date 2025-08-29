@@ -80,7 +80,7 @@ def login_google_with_request(request: Request, response: Response, return_url: 
             httponly=True, 
             max_age=600, 
             samesite="lax",
-            secure=settings.ENVIRONMENT == "production",  # Use secure cookies in production
+            secure=settings.ENVIRONMENT == "production",  
             path="/"
         )
         return resp
@@ -98,7 +98,7 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": settings.GOOGLE_REDIRECT_URI,  # Use the configured redirect URI directly
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI, 
             "grant_type": "authorization_code",
         }
         
