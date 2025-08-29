@@ -1,4 +1,3 @@
-# app/services/auth/google_service.py
 import uuid
 import secrets
 import requests
@@ -20,9 +19,6 @@ SCOPES = ["openid", "email", "profile"]
 def get_dynamic_redirect_uri(request: Request) -> str:
     host = request.headers.get("host")
     
-    print(f"Host header: {host}")
-    print(f"All headers: {dict(request.headers)}")
-    
     if "easypanel.host" in str(host):
         scheme = "https"
     elif "localhost" in str(host):
@@ -30,10 +26,7 @@ def get_dynamic_redirect_uri(request: Request) -> str:
     else:
         scheme = "https" if request.headers.get("x-forwarded-proto") == "https" else "http"
     
-    redirect_uri = f"{scheme}://{host}/v1/auth/google/callback"
-    print(f"Generated redirect URI: {redirect_uri}")
-    
-    return redirect_uri
+    return f"{scheme}://{host}/v1/auth/google/callback"
 
 def build_google_url(redirect_uri: str) -> str:
     if not settings.GOOGLE_CLIENT_ID:
@@ -51,7 +44,6 @@ def build_google_url(redirect_uri: str) -> str:
     return f"{GOOGLE_AUTH_URI}?{urlencode(params)}"
 
 def login_google(request: Request, response: Response, return_url: bool = False):
-    """Initiate Google OAuth login with dynamic redirect URI"""
     try:
         redirect_uri = get_dynamic_redirect_uri(request)
         url = build_google_url(redirect_uri)
