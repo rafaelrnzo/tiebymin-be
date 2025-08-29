@@ -2,10 +2,11 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Response, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel, EmailStr
 
 from app.repositories.user_repository import UserRepository
 from app.dependencies.dependencies import get_user_repository
-from app.schemas.user import User as UserSchema, UserRegistration, UserLogin, UserCreate
+from app.schemas.user import User as UserSchema, UserLogin, UserCreate
 from app.services.auth.token_service import get_current_user, create_access_token
 from app.services.auth.google_service import login_google, callback_google
 from app.utils.password_utils import verify_password, get_password_hash
@@ -15,9 +16,16 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
+class UserRegistrationOptional(BaseModel):
+    email: EmailStr
+    first_name: str
+    last_name: Optional[str] = None
+    password: str
+    phone: Optional[str] = None
+
 @router.post("/register")
 def register_user(
-    user_data: UserRegistration,
+    user_data: UserRegistrationOptional,
     user_repo: UserRepository = Depends(get_user_repository),
 ):
     existing_user = user_repo.get_by_email(user_data.email)
@@ -29,9 +37,9 @@ def register_user(
     user_to_create = UserCreate(
         email=user_data.email,
         first_name=user_data.first_name,
-        last_name=getattr(user_data, "last_name", None),
-        phone=getattr(user_data, "phone", None),
-        google_id=getattr(user_data, "google_id", None),
+        last_name=user_data.last_name or "",
+        phone=user_data.phone,
+        google_id=None,
         password_hash=hashed_password,
     )
 

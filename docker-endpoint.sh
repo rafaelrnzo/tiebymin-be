@@ -31,7 +31,6 @@ else:
     sys.exit(1)
 PYCODE
 
-# ===== Alembic (opsional) =====
 RUN_ALEMBIC="${RUN_ALEMBIC:-1}"  # set 0 untuk skip total
 ALEMBIC_STAMP_IF_MISSING="${ALEMBIC_STAMP_IF_MISSING:-0}"  # set 1 untuk auto 'alembic stamp head' jika missing revision
 ALEMBIC_AUTO_GENERATE="${ALEMBIC_AUTO_GENERATE:-0}"  # set 1 untuk autogenerate revision (dev)
@@ -43,7 +42,6 @@ if [ "$RUN_ALEMBIC" != "0" ] && [ -f "alembic.ini" ] && [ -d "$MIGR_DIR" ]; then
   echo "==> Running Alembic (dir: $MIGR_DIR)"
   VERS_DIR="$MIGR_DIR/versions"
 
-  # Jika folder versions kosong (karena di-ignore Git), boleh autogenerate initial (dev only)
   if [ -d "$VERS_DIR" ] && [ -z "$(ls -A "$VERS_DIR" 2>/dev/null || true)" ]; then
     echo "No migrations found. Autogenerating initial revision (dev only)..."
     alembic revision --autogenerate -m "auto-initial-$(date +%Y%m%d%H%M%S)" || true
@@ -54,7 +52,6 @@ if [ "$RUN_ALEMBIC" != "0" ] && [ -f "alembic.ini" ] && [ -d "$MIGR_DIR" ]; then
     alembic revision --autogenerate -m "auto-$(date +%Y%m%d%H%M%S)" || true
   fi
 
-  # Jalankan upgrade head; jika gagal karena missing revision, opsi auto-stamp
   set +e
   UPG_OUT="$(alembic upgrade head 2>&1)"
   UPG_CODE="$?"
