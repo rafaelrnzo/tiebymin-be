@@ -60,15 +60,10 @@ class Settings(BaseSettings):
     def _build_url(self, path: str, base: Optional[str] = None) -> str:
         base = (base or (self.PUBLIC_BASE_URL or "http://localhost:8000")).rstrip("/")
         return f"{base}{path}"
+    
+    def google_redirect(self) -> str:
+        return self.GOOGLE_REDIRECT_URI
 
-    def google_redirect(self, request: Optional["Request"] = None) -> str:
-        if self.GOOGLE_REDIRECT_URI:
-            return str(self.GOOGLE_REDIRECT_URI)
-
-        if request is not None:
-            return str(request.url_for("callback_google"))
-
-        return self._build_url(self.GOOGLE_REDIRECT_PATH)
 
 
 settings = Settings()
