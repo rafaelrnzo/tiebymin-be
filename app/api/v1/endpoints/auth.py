@@ -8,9 +8,14 @@ from app.repositories.user_repository import UserRepository
 from app.dependencies.dependencies import get_user_repository
 from app.schemas.user import User as UserSchema, UserLogin, UserCreate
 from app.services.auth.token_service import get_current_user, create_access_token
-from app.services.auth.google_service import login_google, callback_google
 from app.utils.password_utils import verify_password, get_password_hash
 from app.core.config import settings
+
+# Import the stateless version
+from app.services.auth.google_service_stateless import (
+    login_google_stateless as login_google, 
+    callback_google_stateless as callback_google
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -71,9 +76,6 @@ async def login_user(
 
 @router.get("/google/login")
 def google_login(request: Request, response: Response):
-    redirect_uri = settings.google_redirect(request)
-    settings.GOOGLE_REDIRECT_URI = redirect_uri 
-
     ua = request.headers.get("user-agent", "").lower()
     accept = request.headers.get("accept", "").lower()
     is_swagger_like = "swagger" in ua or "application/json" in accept
@@ -90,13 +92,10 @@ def google_callback(
 ):
     if error:
         raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
-    if not code or not state:
-        raise HTTPException(status_code=400, detail="Missing authorization code or state parameter")
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
 
-    redirect_uri = settings.google_redirect(request)
-    settings.GOOGLE_REDIRECT_URI = redirect_uri
-
-    return callback_google(request, code, state, user_repo)
+    return callback_google(request, code, user_repo)
 
 @router.get("/me", response_model=UserSchema)
 async def read_current_user(current_user: UserSchema = Depends(get_current_user)):
