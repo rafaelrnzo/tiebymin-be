@@ -2,6 +2,12 @@
 import uuid
 import secrets
 import requests
+import base64
+import hmac
+import hashlib
+import time
+from typing import Optional
+
 from urllib.parse import urlencode
 from fastapi import HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -18,6 +24,58 @@ GOOGLE_USERINFO_URI = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 SCOPES = ["openid", "email", "profile"]
 STATE_COOKIE_NAME = "g_state"
+
+# If you hop across subdomains and want the cookie to be shared,
+# set this to something like ".yourdomain.com". Otherwise keep None.
+COOKIE_DOMAIN: Optional[str] = None
+
+# Signed-state config
+STATE_TTL_SECONDS = 600  # 10 minutes
+
+
+def _b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _unb64url(s: str) -> bytes:
+    pad = "=" * (-len(s) % 4)
+    return base64.urlsafe_b64decode(s + pad)
+
+
+def _sign_state(nonce: str, issued_at: int) -> str:
+    msg = f"{nonce}.{issued_at}".encode("utf-8")
+    key = settings.SECRET_KEY.encode("utf-8")
+    sig = hmac.new(key, msg, hashlib.sha256).digest()
+    return _b64url(sig)
+
+
+def create_state() -> str:
+    """
+    Creates a self-contained, signed state value that does not require server-side storage.
+    Format: "<nonce>.<issued_at>.<sig>"
+    """
+    nonce = secrets.token_urlsafe(16)
+    issued_at = int(time.time())
+    sig = _sign_state(nonce, issued_at)
+    return f"{nonce}.{issued_at}.{sig}"
+
+
+def verify_state(state: str) -> bool:
+    """
+    Verifies the signed state value and checks TTL.
+    """
+    try:
+        nonce, ts_str, sig = state.split(".", 2)
+        issued_at = int(ts_str)
+    except Exception:
+        return False
+
+    # TTL check
+    if int(time.time()) - issued_at > STATE_TTL_SECONDS:
+        return False
+
+    expected_sig = _sign_state(nonce, issued_at)
+    return hmac.compare_digest(sig, expected_sig)
 
 
 def build_google_url(state: str) -> str:
@@ -41,23 +99,24 @@ def build_google_url(state: str) -> str:
 
 
 def _set_state_cookie(resp: Response, state: str) -> None:
-    # NOTE: SameSite=Lax is usually fine for same-site flows.
-    # If your FE and BE are on different top-level domains and the cookie
-    # needs to be sent cross-site, consider SameSite=None; Secure=True.
+    """
+    Cross-site safe cookie so it survives the redirect from Google back to your domain.
+    """
     resp.set_cookie(
         STATE_COOKIE_NAME,
         state,
         httponly=True,
-        max_age=600,
-        samesite="lax",
-        secure=(settings.ENVIRONMENT == "production"),
+        max_age=STATE_TTL_SECONDS,
+        samesite="none",       # cross-site friendly
+        secure=True,           # required when SameSite=None
         path="/",
+        domain=COOKIE_DOMAIN,  # keep None unless you need a parent domain
     )
 
 
 def login_google(response: Response):
     try:
-        state = secrets.token_urlsafe(24)
+        state = create_state()
         url = build_google_url(state)
         print(f"🔥 Redirecting to: {url}")
         resp = RedirectResponse(url=url, status_code=302)
@@ -70,10 +129,11 @@ def login_google(response: Response):
 
 def login_google_with_request(request: Request, response: Response, return_url: bool = False):
     try:
-        state = secrets.token_urlsafe(24)
+        state = create_state()
         url = build_google_url(state)
 
         if return_url:
+            # Useful for Swagger/manual flows; returns URL + state for copy-paste
             return {
                 "google_oauth_url": url,
                 "state": state,
@@ -92,9 +152,16 @@ def login_google_with_request(request: Request, response: Response, return_url: 
 def callback_google(request: Request, code: str, state: str, user_repo: UserRepository):
     try:
         cookie_state = request.cookies.get(STATE_COOKIE_NAME)
-        if not cookie_state or cookie_state != state:
-            raise HTTPException(status_code=400, detail="Invalid state parameter")
 
+        # Accept cookie match, or—if no cookie—accept a valid signed state.
+        if cookie_state:
+            if cookie_state != state:
+                raise HTTPException(status_code=400, detail="Invalid state parameter (cookie mismatch)")
+        else:
+            if not verify_state(state):
+                raise HTTPException(status_code=400, detail="Invalid state parameter")
+
+        # Exchange code for tokens
         token_data = {
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -127,6 +194,7 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
         if not access_token:
             raise HTTPException(status_code=400, detail="Access token not received from Google")
 
+        # Fetch userinfo
         headers = {"Authorization": f"Bearer {access_token}"}
         userinfo_resp = requests.get(GOOGLE_USERINFO_URI, headers=headers, timeout=15)
 
@@ -145,8 +213,8 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
         if not google_id:
             raise HTTPException(status_code=400, detail="Google ID not provided by Google")
 
+        # Upsert user
         user = user_repo.get_by_email(email=email)
-
         if not user:
             user_to_create = UserCreate(
                 email=email,
@@ -160,18 +228,19 @@ def callback_google(request: Request, code: str, state: str, user_repo: UserRepo
             user_repo.update_google_id(user.id, google_id)
             user.google_id = google_id
 
+        # App token
         jwt_token = create_access_token(data={"sub": str(user.id)})
 
-        # Clean up state cookie and redirect (or return JSON)
+        # Clean up & redirect / return JSON
         if getattr(settings, "GOOGLE_POST_LOGIN_REDIRECT", None):
             redirect_url = f"{settings.GOOGLE_POST_LOGIN_REDIRECT}#access_token={jwt_token}&token_type=bearer"
             resp = RedirectResponse(url=redirect_url, status_code=302)
-            resp.delete_cookie(STATE_COOKIE_NAME, path="/", samesite="lax")
+            # delete cookie (best-effort)
+            resp.delete_cookie(STATE_COOKIE_NAME, path="/", samesite="none", domain=COOKIE_DOMAIN)
             return resp
-        else:
-            # API-style response
-            resp = {"access_token": jwt_token, "token_type": "bearer"}
-            return resp
+
+        # API-style success
+        return {"access_token": jwt_token, "token_type": "bearer"}
 
     except HTTPException:
         raise

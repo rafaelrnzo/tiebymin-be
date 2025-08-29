@@ -1,5 +1,7 @@
 # app/api/v1/routers/auth.py
 import secrets
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Request, Response, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
@@ -8,12 +10,16 @@ from app.repositories.user_repository import UserRepository
 from app.dependencies.dependencies import get_user_repository
 from app.schemas.user import User as UserSchema, UserRegistration, UserLogin, UserCreate
 from app.services.auth.token_service import get_current_user, create_access_token
-from app.services.auth.google_service import login_google, callback_google, build_google_url
+from app.services.auth.google_service import (
+    login_google,
+    callback_google,
+    build_google_url,
+    create_state,
+)
 from app.utils.password_utils import verify_password, get_password_hash
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
-
 
 @router.post("/register", response_model=UserSchema)
 def register_user(
@@ -52,7 +58,6 @@ async def login_user(
 
 @router.get("/debug/google")
 def debug_google_config():
-    # Helpful for confirming env/config on a running instance
     return {
         "google_client_id": settings.GOOGLE_CLIENT_ID[:20] + "..." if settings.GOOGLE_CLIENT_ID else "NOT SET",
         "google_client_secret": "SET" if settings.GOOGLE_CLIENT_SECRET else "NOT SET",
@@ -64,7 +69,7 @@ def debug_google_config():
 
 @router.get("/google/test-url")
 def test_google_url():
-    state = secrets.token_urlsafe(24)
+    state = create_state()
     url = build_google_url(state)
     return {
         "google_oauth_url": url,
@@ -79,9 +84,8 @@ def google_login(request: Request, response: Response):
     referer = request.headers.get("referer", "")
     is_swagger_like = "swagger" in user_agent or "/docs" in referer
 
-    # Swagger/Redoc often block or ignore 302 in-UI; return the URL instead
     if is_swagger_like:
-        state = secrets.token_urlsafe(24)
+        state = create_state()
         url = build_google_url(state)
         return {
             "message": "Copy this URL and open it in a new browser tab to complete Google OAuth",
@@ -96,9 +100,9 @@ def google_login(request: Request, response: Response):
 @router.get("/google/callback")
 def google_callback(
     request: Request,
-    code: str | None = None,
-    state: str | None = None,
-    error: str | None = None,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
     user_repo: UserRepository = Depends(get_user_repository),
 ):
     if error:
