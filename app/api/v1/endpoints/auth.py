@@ -2,9 +2,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Request, Response, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, EmailStr
-from fastapi.responses import RedirectResponse, JSONResponse
-from urllib.parse import urlencode
-import httpx
 
 from app.repositories.user_repository import UserRepository
 from app.dependencies.dependencies import get_user_repository
@@ -61,48 +58,51 @@ def register_user(
         },
     }
 
-@router.get("/google/login", tags=["Auth"])
-async def google_login():
 
-    params = {
-        "client_id": settings.GOOGLE_CLIENT_ID,
-        "redirect_uri": settings.google_redirect(),
-        "response_type": "code",
-        "scope": "openid email profile",
-        "access_type": "offline",
-        "prompt": "consent",
-    }
-    google_auth_url = f"https://accounts.google.com/o/oauth2/auth?{urlencode(params)}"
-    return RedirectResponse(url=google_auth_url)
+@router.post("/login")
+async def login_user(
+    user_login: UserLogin,
+    user_repo: UserRepository = Depends(get_user_repository),
+):
+    user = user_repo.get_by_email(user_login.email)
+    if not user or not verify_password(user_login.password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+
+    token = create_access_token({"sub": str(user.id)})
+    return {"access_token": token, "token_type": "bearer"}
 
 
-@router.get("/google/callback", tags=["Auth"])
-async def google_callback(request: Request, code: str, state: str = None):
+@router.get("/google/login")
+def google_login(request: Request, response: Response):
+    redirect_uri = settings.google_redirect(request)
+    settings.GOOGLE_REDIRECT_URI = redirect_uri  # optional update
 
-    token_url = "https://oauth2.googleapis.com/token"
-    userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+    ua = request.headers.get("user-agent", "").lower()
+    accept = request.headers.get("accept", "").lower()
+    is_swagger_like = "swagger" in ua or "application/json" in accept
 
-    async with httpx.AsyncClient() as client:
-        token_data = {
-            "code": code,
-            "client_id": settings.GOOGLE_CLIENT_ID,
-            "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": settings.google_redirect(),
-            "grant_type": "authorization_code",
-        }
-        token_resp = await client.post(token_url, data=token_data)
-        token_json = token_resp.json()
+    return login_google(request, response, return_url=is_swagger_like)
 
-        if "error" in token_json:
-            return JSONResponse(token_json, status_code=400)
 
-        access_token = token_json.get("access_token")
+@router.get("/google/callback", name="callback_google")
+def google_callback(
+    request: Request,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+    user_repo: UserRepository = Depends(get_user_repository),
+):
+    if error:
+        raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing authorization code or state parameter")
 
-        headers = {"Authorization": f"Bearer {access_token}"}
-        userinfo_resp = await client.get(userinfo_url, headers=headers)
-        userinfo = userinfo_resp.json()
+    redirect_uri = settings.google_redirect(request)
+    settings.GOOGLE_REDIRECT_URI = redirect_uri
 
-    return {
-        "access_token": access_token,
-        "user": userinfo,
-    }
+    return callback_google(request, code, state, user_repo)
+
+
+@router.get("/me", response_model=UserSchema)
+async def read_current_user(current_user: UserSchema = Depends(get_current_user)):
+    return current_user
