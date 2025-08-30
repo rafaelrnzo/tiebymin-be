@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 import uuid
 from typing import List, Any, Dict
-from services.analysis.product_match_services import ProductRecommendationService
+from app.services.analysis.product_match_services import ProductRecommendationService
 
 from repositories.user_analysis_result_repository import UserAnalysisResultRepository
 from repositories.product_repository import ProductRepository
