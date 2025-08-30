@@ -17,7 +17,7 @@ from app.dependencies.dependencies import (
     get_product_bmi_compatibility_repository
 )
 
-router = APIRouter(prefix="/v1/recommendations", tags=["Product Recommendations"])
+router = APIRouter(prefix="/recommendations", tags=["Product Recommendations"])
 
 @router.get("/{analysis_result_id}", response_model=Dict[str, List[Any]])
 def get_product_recommendations_from_backend(
