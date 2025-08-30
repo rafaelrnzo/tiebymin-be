@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Dict, Any
 from collections import defaultdict
-from utils import color_utils
+from app.utils import color_utils
 
 from repositories.user_analysis_result_repository import UserAnalysisResultRepository
 from repositories.product_repository import ProductRepository
